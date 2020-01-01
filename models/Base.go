@@ -1,12 +1,13 @@
 package models
 
 import (
+	"context"
 	"fmt"
-	"os"
 
-	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Payload struct {
@@ -15,9 +16,9 @@ type Payload struct {
 	Data    interface{} `json:"data"`
 }
 
-var db *gorm.DB        //database
-var db_sas *gorm.DB    //database
-var db_master *gorm.DB //database
+var db *mongo.Database //database
+// var db_sas *gorm.DB    //database
+// var db_master *gorm.DB //database
 
 func init() {
 
@@ -26,41 +27,49 @@ func init() {
 		fmt.Print(e)
 	}
 
-	username := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASS")
-	db_name := os.Getenv("DB_NAME")
-	db_name_sas := os.Getenv("DB_SEMAYA_SAS")
-	db_name_master := os.Getenv("DB_SEMAYA_MASTER")
-	// dbHost := os.Getenv("db_host")
+	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
 
-	dbURI := fmt.Sprintf("%s:%s@/%s?charset=utf8&parseTime=True&loc=Local", username, password, db_name)
-	dbURISas := fmt.Sprintf("%s:%s@/%s?charset=utf8&parseTime=True&loc=Local", username, password, db_name_sas)
-	dbURIMaster := fmt.Sprintf("%s:%s@/%s?charset=utf8&parseTime=True&loc=Local", username, password, db_name_master)
-
-	conn, err := gorm.Open("mysql", dbURI)
-	connSas, err := gorm.Open("mysql", dbURISas)
-	connMaster, err := gorm.Open("mysql", dbURIMaster)
-
+	// Connect to MongoDB
+	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
-		fmt.Print(err)
+		panic(err)
 	}
+	db = client.Database("smart_school")
+	// username := os.Getenv("DB_USER")
+	// password := os.Getenv("DB_PASS")
+	// db_name := os.Getenv("DB_NAME")
+	// db_name_sas := os.Getenv("DB_SEMAYA_SAS")
+	// db_name_master := os.Getenv("DB_SEMAYA_MASTER")
+	// dbHost := os.Getenv("db_host")
+	// dbURI := fmt.Sprintf("host=localhost port=5433 user=%s dbname=%s password=%s sslmode=disable", username, db_name, password)
+	// dbURI := fmt.Sprintf("%s:%s@/%s?charset=utf8&parseTime=True&loc=Local", username, password, db_name)
+	// dbURISas := fmt.Sprintf("%s:%s@/%s?charset=utf8&parseTime=True&loc=Local", username, password, db_name_sas)
+	// dbURIMaster := fmt.Sprintf("%s:%s@/%s?charset=utf8&parseTime=True&loc=Local", username, password, db_name_master)
 
-	db = conn.LogMode(true)
-	db_sas = connSas
-	db_master = connMaster
+	// conn, err := gorm.Open("postgres", dbURI)
+	// conn, err := gorm.Open("mysql", dbURI)
 
-	db.Debug().AutoMigrate(&Attendance{}) //Database migration
+	// connSas, err := gorm.Open("mysql", dbURISas)
+	// connMaster, err := gorm.Open("mysql", dbURIMaster)
+
+	// if err != nil {
+	// 	fmt.Print(err)
+	// }
+
+	// db = conn.LogMode(true)
+	// db.Set("gorm:auto_preload", true)
+	// // db_sas = connSas
+	// db_master = connMaster
+
+	// db.Debug().AutoMigrate(&User{}, &Camera{}, &Attendance{}, &Role{}) //Database migration
 }
 
-//returns a handle to the DB object
-func GetDB(whatDB string) *gorm.DB {
-	if whatDB == "sas" {
-		return db_sas
-	} else if whatDB == "master" {
-		return db_master
-	} else if whatDB == "main" {
+// GetDB : returns a handle to the DB object
+func GetDB(whatDB string) *mongo.Database {
+	if whatDB == "main" {
 		return db
 	} else {
-		return db_master
+		return db
 	}
+	return db
 }

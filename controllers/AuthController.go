@@ -3,12 +3,6 @@ package controllers
 import (
 	"fmt"
 	"net/http"
-	"os"
-
-	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/jinzhu/gorm"
-	"github.com/zuramai/smartschool_api/models"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func AuthIndex() {
@@ -21,43 +15,43 @@ type Response struct {
 }
 
 func AuthLogin(w http.ResponseWriter, r *http.Request) {
-	username := r.FormValue("username")
-	password := r.FormValue("password")
+	// username := r.FormValue("username")
+	// password := r.FormValue("password")
 
-	user := models.User{}
+	// user := models.User{}
 
-	err := models.GetDB("main").Where("username = ?", username).First(&user).Error
+	// err := models.GetDB("main").Where("username = ?", username).First(&user).Error
 
-	var returnMsg interface{}
+	// var returnMsg interface{}
 
-	if err != nil {
-		if err := models.GetDB("main").Where("username = ?", username).First(&user).Error; err != nil && err != gorm.ErrRecordNotFound {
-			respondJSON(w, http.StatusInternalServerError, "Username not found", returnMsg)
-			return
-		}
+	// if err != nil {
+	// 	if err := models.GetDB("main").Where("username = ?", username).First(&user).Error; err != nil && err != gorm.ErrRecordNotFound {
+	// 		respondJSON(w, http.StatusInternalServerError, "Username not found", returnMsg)
+	// 		return
+	// 	}
 
-		respondJSON(w, http.StatusInternalServerError, "Internal Server Error", returnMsg)
-		return
-	}
+	// 	respondJSON(w, http.StatusInternalServerError, "Internal Server Error", returnMsg)
+	// 	return
+	// }
 
-	hashedPassword := user.Password
+	// hashedPassword := user.Password
 
-	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	// err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 
-	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
-		respondJSON(w, http.StatusUnauthorized, "Invalid Credentials", user)
-		return
-	}
+	// if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
+	// 	respondJSON(w, http.StatusUnauthorized, "Invalid Credentials", models.User{})
+	// 	return
+	// }
 
-	tk := &models.Token{UserID: user.ID}
-	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
-	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
+	// tk := &models.Token{UserID: user.ID}
+	// token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
+	// tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
 
-	user.Token = tokenString
+	// user.Token = tokenString
 
-	respondJSON(w, http.StatusOK, "Successfully Logged In!", user)
-	return
-	// w.Header().Set("Content-Type", "application/json")
+	// respondJSON(w, http.StatusOK, "Successfully Logged In!", map[string]interface{}{"token": tokenString})
+	// return
+	// // w.Header().Set("Content-Type", "application/json")
 
 }
 

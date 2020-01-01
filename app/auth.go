@@ -29,7 +29,6 @@ var JwtAuthentication = func(next http.Handler) http.Handler {
 
 		if tokenHeader == "" {
 			response = u.Message(false, "Unauthenticated")
-			w.WriteHeader(http.StatusForbidden)
 			w.Header().Add("Content-Type", "application/json")
 			u.Respond(w, response)
 			return

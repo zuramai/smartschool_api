@@ -97,6 +97,8 @@ func main() {
 	v2Attendance.HandleFunc("/new", controllers.AttendanceV2New).Methods("POST") // Store
 
 	v2User := apiV2.PathPrefix("/user").Subrouter()
+	v2User.HandleFunc("/", controllers.UserIndex).Methods("GET")             // View All
+	v2User.HandleFunc("/mongo", controllers.UserIndexMongo).Methods("GET")   // View All
 	v2User.HandleFunc("/", controllers.UserV2Index).Methods("POST")          // Register
 	v2User.HandleFunc("/{id}", controllers.UserV2Detail).Methods("GET")      // Detail
 	v2User.HandleFunc("/verify", controllers.UserV2Verify).Methods("POST")   // Verify

@@ -4,15 +4,23 @@ import (
 	"time"
 )
 
+// Attendance : Base struct table attendance
 type Attendance struct {
-	ID        int64     `json:"id" gorm:"type:bigint(20) unsigned auto_increment;not null;primary_key"`
-	UserID    int64     `json:"user_id" gorm:"type:bigint;index;foreign_key"`
-	PhotoName string    `json:"photo_name" gorm:"type:varchar(255)"`
-	AttendAt  time.Time `json:"attend_at" gorm:"type:datetime" sql:"DEFAULT:current_timestamp"`
-	CreatedAt time.Time `json:"createdAt" gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP"`
-	UpdatedAt time.Time `json:"updatedAt" gorm:"column:updated_at;not null;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"`
+	UserID       string    `json:"-" bson:"user_id"`
+	PictureTaken string    `json:"picture_taken" bson:"picture_taken"`
+	AttendAt     time.Time `json:"attend_at" bson:"attend_at"`
+	Keterangan   string    `json:"status"`
 }
 
+// Attendance : attendance for json response
+type AttendanceJSON struct {
+	User      UserJSON  `json:"user"`
+	PhotoName string    `json:"photo_name" gorm:"type:varchar(255)"`
+	AttendAt  time.Time `json:"attend_at" gorm:"type:timestamp" sql:"DEFAULT:current_timestamp"`
+	Status    string    `json:"status"`
+}
+
+// TableName : Set the name of table Attendance
 func (Attendance) TableName() string {
 	return "attendances"
 }
