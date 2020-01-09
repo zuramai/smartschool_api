@@ -2,60 +2,41 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/gorilla/mux"
 
 	"github.com/zuramai/smartschool_api/models"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var users []models.User
 
 func UserIndex(w http.ResponseWriter, r *http.Request) {
-	// search := r.URL.Query().Get("search")
-	// // _, perPage, offset := u.Paginate(r)
-	// models.GetDB("master").Find(&users)
-	// // models.GetDB("master").Where("name LIKE ?", "%"+search+"%").Offset(offset).Limit(perPage).Order("id asc").Find(&users)
-	// respondJSON(w, 200, "Success get all data users, search: "+search, users)
-}
+	timeStart := time.Now()
+	users := []models.User{}
+	user := models.User{}
 
-type UserMongo struct {
-	ID primitive.ObjectID `bson:"_id" json:"id,omitempty"`
-}
-
-func UserIndexMongo(w http.ResponseWriter, r *http.Request) {
-	const (
-		// Name of the database.
-		DBName = "smart_school"
-		URI    = "mongodb://localhost/smart_school"
-	)
-
-	ctx := context.Background() // Options to the database.
-	clientOpts := options.Client().ApplyURI(URI)
-	client, err := mongo.Connect(ctx, clientOpts)
+	ctx := context.TODO() // Options to the database.
+	coll, err := models.GetDB("main").Collection("users").Find(ctx, bson.M{})
 	if err != nil {
 		fmt.Println(err)
-		return
-	}
-	db := client.Database(DBName)
-
-	notesResult := []UserMongo{}
-	n := UserMongo{}
-	coll := db.Collection("users")
-	cursor, err := coll.Find(ctx, bson.M{})
-	if err != nil {
-		fmt.Println(err)
-		return
-	} // Iterate through the returned cursor.
-	for cursor.Next(ctx) {
-		cursor.Decode(&n)
-		notesResult = append(notesResult, n)
 	}
 
-	respondJSON(w, 200, "Success get all data users", notesResult)
+	for coll.Next(ctx) {
+		coll.Decode(&user)
+		users = append(users, user)
+
+		user = models.User{}
+	}
+	timeEnd := time.Since(timeStart)
+	fmt.Println("Time Elapsed: ", timeEnd)
+	respondJSON(w, 200, "Success get all data users", users)
 
 }
 
@@ -134,8 +115,70 @@ func UserV2Index(w http.ResponseWriter, r *http.Request) {
 
 func UserV2Detail(w http.ResponseWriter, r *http.Request) {
 
+	userID := mux.Vars(r)["id"]
+
+	fmt.Println(userID)
+	var user models.User
+	err := models.GetDB("main").Collection("users").FindOne(context.TODO(), bson.M{"user_id": userID}).Decode(&user)
+
+	if err != nil {
+		fmt.Println(err)
+		respondJSON(w, 200, "User not found", map[string]interface{}{})
+		return
+	}
+
+	respondJSON(w, 200, "Get User Data Embeddings", user)
+	return
 }
 
 func UserV2Verify(w http.ResponseWriter, r *http.Request) {
+	var user models.UserVerify
+	var checkUser models.User
+	// photo, _, errFile := r.FormFile("photo")
+	// if errFile != nil {
+	// 	respondErrorValidationJSON(w, 422, "Error", map[string]interface{}{
+	// 		"photo": "Photo is required",
+	// 	})
+	// }
+	// fmt.Println(r.Body)
+	err := json.NewDecoder(r.Body).Decode(&user)
 
+	if err != nil && err != io.EOF {
+		// fmt.Println(err)
+		respondJSON(w, 422, "Error", map[string]interface{}{})
+		return
+	}
+	stringUserID := strconv.Itoa(user.UserID)
+	// fmt.Println(user)
+	errCheck := models.GetDB("main").Collection("users").FindOneAndUpdate(context.TODO(), bson.M{"user_id": stringUserID}, bson.M{"$set": bson.M{"embeddings": user.Embeddings, "status": 1}}).Decode(&checkUser)
+
+	if errCheck != nil {
+		fmt.Println("notfound", errCheck)
+		respondJSON(w, 422, "Verify failed", map[string]interface{}{})
+		return
+	}
+
+	respondJSON(w, 200, "Verify success!", map[string]interface{}{
+		"user": checkUser,
+	})
+	return
+}
+
+func UserV2Embeddings(w http.ResponseWriter, r *http.Request) {
+	var userEmbedding models.UserEmbeddings
+	var userEmbeddings []models.UserEmbeddings
+	cursor, err := models.GetDB("main").Collection("users").Find(context.TODO(), bson.M{})
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for cursor.Next(context.TODO()) {
+		cursor.Decode(&userEmbedding)
+		userEmbeddings = append(userEmbeddings, userEmbedding)
+		userEmbedding = models.UserEmbeddings{}
+	}
+
+	respondJSON(w, 200, "Get All Data Embeddings", userEmbeddings)
+	return
 }

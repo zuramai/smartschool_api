@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>TEST</title>
+</head>
+
+<body>
+    <h1>Test SOCKET</h1>
+    <script>
+        let socket = new WebSocket("ws://127.0.0.1:8765/ws");
+        console.log("Attempting Connection...");
+
+        socket.onopen = function () {
+            console.log("Successfully Connected");
+            socket.send("Hi From the Client!");
+        };
+
+        socket.onclose = function (event) {
+            console.log("Socket Closed Connection: ", event);
+            socket.send("Client Closed!");
+        };
+
+        socket.onerror = function (error) {
+            console.log("Socket Error: ", error);
+        };
+
+        socket.onmessage = function(event) {
+            console.log(`[message] Data received from server: ${event.data}`);
+            let jeson = JSON.parse(event.data);
+            console.log(jeson)
+        };
+        
+    </script>
+</body>
+
+</html>

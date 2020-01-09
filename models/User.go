@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Token struct {
@@ -12,19 +13,20 @@ type Token struct {
 }
 
 type User struct {
-	ID        uint       `json:"id" gorm:"primary_key"`
-	Username  string     `json:"username" gorm:"size:100;unique_index"`
-	Password  string     `json:"-" gorm:"size:100;"`
-	Name      string     `json:"name" gorm:"size:255"`
-	Phone     string     `json:"phone" gorm:"size:14"`
-	PhotoName string     `json:"photo_name" gorm:"size:100"`
-	RoleID    uint       `json:"-" `
-	Role      Role       `json:"role" gorm:"foreignkey:RoleID"`
-	Status    bool       `json:"status" gorm:"type:boolean"`
-	Token     string     `json:"token" sql:"-"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
-	DeletedAt *time.Time `json:"deleted_at"`
+	ID         primitive.ObjectID `json:"id" bson:"_id" `
+	UserID     string             `json:"user_id" bson:"user_id"`
+	Username   string             `json:"username" bson:"username"`
+	Password   string             `json:"-" bson:"password"`
+	Name       string             `json:"name" bson:"name" `
+	Phone      string             `json:"phone" bson:"phone" `
+	PhotoName  string             `json:"photo_name" bson:"photo" `
+	Role       string             `json:"role" bson:"role"`
+	Status     int32              `json:"status" bson:"status"`
+	Token      string             `json:"-"`
+	Embeddings [][]float64        `json:"embeddings" bson:"embeddings"`
+	CreatedAt  time.Time          `json:"created_at"`
+	UpdatedAt  time.Time          `json:"updated_at"`
+	DeletedAt  *time.Time         `json:"deleted_at"`
 }
 
 type UserJSON struct {
@@ -32,4 +34,15 @@ type UserJSON struct {
 	Username  string `json:"username" gorm:"size:100;unique_index"`
 	Name      string `json:"name" gorm:"size:255"`
 	PhotoName string `json:"photo_name" gorm:"size:100"`
+}
+
+type UserVerify struct {
+	UserID     int         `json:"user_id"`
+	Embeddings [][]float64 `json:"embeddings"`
+}
+
+type UserEmbeddings struct {
+	UserID     string      `json:"user_id", bson:"user_id"`
+	Name       string      `json:"name" bson:"name"`
+	Embeddings [][]float64 `json:"embeddings" bson:"embeddings"`
 }

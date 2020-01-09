@@ -12,6 +12,12 @@ type Attendance struct {
 	Keterangan   string    `json:"status"`
 }
 
+type AttendanceSocket struct {
+	Name string 
+	Time time.Time
+	ImageName string
+}
+
 // Attendance : attendance for json response
 type AttendanceJSON struct {
 	User      UserJSON  `json:"user"`
