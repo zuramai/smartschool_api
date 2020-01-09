@@ -102,12 +102,13 @@ func main() {
 	v2Attendance.HandleFunc("/new", controllers.AttendanceV2New).Methods("POST") // Store
 
 	v2User := apiV2.PathPrefix("/user").Subrouter()
-	v2User.HandleFunc("/", controllers.UserIndex).Methods("GET")                  // View All
-	v2User.HandleFunc("/", controllers.UserV2Index).Methods("POST")               // Register
-	v2User.HandleFunc("/embeddings", controllers.UserV2Embeddings).Methods("GET") // Verify
-	v2User.HandleFunc("/{id}", controllers.UserV2Detail).Methods("GET")           // Detail
-	v2User.HandleFunc("/verify", controllers.UserV2Verify).Methods("POST")        // Verify
-	v2User.HandleFunc("/register", controllers.UserRegister).Methods("POST")      // Store
+	v2User.HandleFunc("/", controllers.UserIndex).Methods("GET")                         // View All
+	v2User.HandleFunc("/", controllers.UserV2Index).Methods("POST")                      // Register
+	v2User.HandleFunc("/embeddings", controllers.UserV2Embeddings).Methods("GET")        // Verify
+	v2User.HandleFunc("/{id}", controllers.UserV2Detail).Methods("GET")                  // Detail
+	v2User.HandleFunc("/verify", controllers.UserV2Verify).Methods("POST")               // Verify
+	v2User.HandleFunc("/register", controllers.UserRegister).Methods("POST")             // Store
+	v2User.HandleFunc("/recognize", controllers.UserRecognize).Methods("OPTION", "POST") // Delete
 
 	apiV2.HandleFunc("/room_accesss/check", controllers.RoomAccessCheck).Methods("POST")
 	apiV2.HandleFunc("/classroom", controllers.ClassroomV2Index).Methods("GET")
