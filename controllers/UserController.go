@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"gonum.org/v1/gonum/floats"
 	"io"
 	"math"
 	"net/http"
 	"strconv"
 	"time"
+
+	"gonum.org/v1/gonum/floats"
 
 	"github.com/gorilla/mux"
 
@@ -112,7 +113,25 @@ func UserDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func UserV2Index(w http.ResponseWriter, r *http.Request) {
+	timeStart := time.Now()
+	users := []models.User{}
+	user := models.User{}
 
+	ctx := context.TODO() // Options to the database.
+	coll, err := models.GetDB("main").Collection("users").Find(ctx, bson.M{})
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for coll.Next(ctx) {
+		coll.Decode(&user)
+		users = append(users, user)
+
+		user = models.User{}
+	}
+	timeEnd := time.Since(timeStart)
+	fmt.Println("Time Elapsed: ", timeEnd)
+	respondJSON(w, 200, "Success get all data users", users)
 }
 
 func UserV2Detail(w http.ResponseWriter, r *http.Request) {
@@ -239,4 +258,21 @@ func euclideanDistance(emb1, emb2 []float64) float64 {
 		val += math.Pow(emb1[i]-emb2[i], 2)
 	}
 	return val
+}
+
+func UserV2EmbeddingsClear(w http.ResponseWriter, r *http.Request) {
+	res, err := models.GetDB("main").Collection("users").UpdateMany(context.TODO(), bson.M{}, bson.M{"$set": bson.M{"embeddings": ""}})
+	if err != nil {
+		fmt.Println(err)
+	}
+	respondJSON(w, 200, "Success Clear All Embeddings", res)
+}
+
+func UserV2EmbeddingsClearOnUser(w http.ResponseWriter, r *http.Request) {
+	userID := mux.Vars(r)["id"]
+	res, err := models.GetDB("main").Collection("users").UpdateMany(context.TODO(), bson.M{"user_id": userID}, bson.M{"$set": bson.M{"embeddings": ""}})
+	if err != nil {
+		fmt.Println(err)
+	}
+	respondJSON(w, 200, "Success Clear User Embeddings", res)
 }
