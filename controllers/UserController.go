@@ -166,6 +166,7 @@ func UserV2Verify(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil && err != io.EOF {
 		// fmt.Println(err)
+		fmt.Println("Error", err.Error())
 		respondJSON(w, 422, "Error", map[string]interface{}{})
 		return
 	}
@@ -174,7 +175,8 @@ func UserV2Verify(w http.ResponseWriter, r *http.Request) {
 	errCheck := models.GetDB("main").Collection("users").FindOneAndUpdate(context.TODO(), bson.M{"user_id": stringUserID}, bson.M{"$set": bson.M{"embeddings": user.Embeddings, "status": 1}}).Decode(&checkUser)
 
 	if errCheck != nil {
-		fmt.Println("notfound", errCheck)
+		fmt.Println("not found", errCheck.Error())
+		fmt.Println("Input string : ", user)
 		respondJSON(w, 422, "Verify failed", map[string]interface{}{})
 		return
 	}
