@@ -44,7 +44,7 @@ type UserRecognition struct {
 	Embedding []float64 `json:"embeddings"`
 }
 type UserVerify struct {
-	UserID     int         `json:"user_id"`
+	UserID     string      `json:"user_id"`
 	Embeddings [][]float64 `json:"embeddings"`
 }
 

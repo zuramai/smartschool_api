@@ -109,7 +109,7 @@ func main() {
 	v2User.HandleFunc("/{id}", controllers.UserV2Detail).Methods("GET")                                      // Detail
 	v2User.HandleFunc("/verify", controllers.UserV2Verify).Methods("POST")                                   // Verify
 	v2User.HandleFunc("/register", controllers.UserRegister).Methods("POST")                                 // Store
-	v2User.HandleFunc("/recognize", controllers.UserRecognize).Methods("OPTION", "POST")                     // Delete
+	v2User.HandleFunc("/recognize", controllers.UserRecognize).Methods("OPTION", "POST")                     // Recognize
 
 	apiV2.HandleFunc("/room_accesss/check", controllers.RoomAccessCheck).Methods("POST")
 	apiV2.HandleFunc("/classroom", controllers.ClassroomV2Index).Methods("GET")

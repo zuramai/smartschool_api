@@ -212,8 +212,9 @@ func UserRecognize(w http.ResponseWriter, r *http.Request) {
 	var recognitionList []models.UserRecognition
 
 	json.NewDecoder(r.Body).Decode(&recognition)
-	if recognition.Embedding == nil {
+	if len(recognition.Embedding) == 0 {
 		respondErrorValidationJSON(w, 422, "Input Embedding Null", map[string]interface{}{})
+		return
 	}
 
 	cursor, err := models.GetDB("main").Collection("users").Find(context.TODO(), bson.M{})
@@ -232,24 +233,30 @@ func UserRecognize(w http.ResponseWriter, r *http.Request) {
 		// Index := index
 		if len(UserEmbeddingList.Embeddings) == 0 {
 			continue
+		} else {
+			var val []float64
+			for _, embeddingList := range UserEmbeddingList.Embeddings {
+				val = append(val, euclideanDistance(embeddingList, recognition.Embedding))
+			}
+			recognition.UserID = UserEmbeddingList.UserID
+			recognition.Name = UserEmbeddingList.Name
+			recognition.Accuracy = floats.Min(val)
+			recognition.Elapsed = time.Since(start).String()
+			recognitionList = append(recognitionList, recognition)
 		}
-		var val []float64
-		for _, embeddingList := range UserEmbeddingList.Embeddings {
-			val = append(val, euclideanDistance(embeddingList, recognition.Embedding))
-		}
-		recognition.UserID = UserEmbeddingList.UserID
-		recognition.Name = UserEmbeddingList.Name
-		recognition.Accuracy = floats.Min(val)
-		recognition.Elapsed = time.Since(start).String()
-		recognitionList = append(recognitionList, recognition)
 		// log.Println(maximum)
 	}
-	var acculist []float64
-	for _, value := range recognitionList {
-		acculist = append(acculist, value.Accuracy)
+	if len(recognitionList) == 0 {
+		respondErrorValidationJSON(w, 422, "Cannot Recognize Face!", map[string]interface{}{})
+		return
+	} else {
+		var acculist []float64
+		for _, value := range recognitionList {
+			acculist = append(acculist, value.Accuracy)
+		}
+		respondJSON(w, 200, "Returned Matching Identities", recognitionList[floats.MinIdx(acculist)])
+		return
 	}
-	respondJSON(w, 200, "Returned Matching Identities", recognitionList[floats.MinIdx(acculist)])
-	return
 }
 
 func euclideanDistance(emb1, emb2 []float64) float64 {
