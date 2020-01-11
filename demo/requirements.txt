@@ -2,3 +2,4 @@ dlib
 numpy
 sklearn
 opencv-python
+jcopml

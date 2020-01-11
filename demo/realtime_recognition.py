@@ -7,6 +7,8 @@ from sklearn.preprocessing import LabelEncoder
 import numpy as np
 from align import AlignDlib
 import requests
+from jcopml.utils import save_model, load_model
+
 
 def distance(emb1, emb2):
     return np.sum(np.square(emb1 - emb2))
