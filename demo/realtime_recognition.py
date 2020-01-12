@@ -9,7 +9,7 @@ from align import AlignDlib
 import requests
 from jcopml.utils import save_model, load_model
 
-
+-
 def distance(emb1, emb2):
     return np.sum(np.square(emb1 - emb2))
 
@@ -19,8 +19,8 @@ def align_image(img):
                            landmarkIndices=AlignDlib.OUTER_EYES_AND_NOSE)
 
 
-# vid = cv2.VideoCapture(0)
-vid = cv2.VideoCapture("rtsp://admin:AWPZEO@192.168.1.66/0/h264_stream")
+vid = cv2.VideoCapture(0)
+# vid = cv2.VideoCapture("rtsp://admin:AWPZEO@192.168.1.66/0/h264_stream")
 
 model = load_model ("C:\\Users\\Athanatius.C\\Tensorflow\\Face Recognition\\Model\\SRCV-core.vcore")
 protoPath = os.path.join("models", "deploy.prototxt")

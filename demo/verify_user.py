@@ -16,7 +16,7 @@ def align_image(img):
                            landmarkIndices=AlignDlib.OUTER_EYES_AND_NOSE)
 
 vid = cv2.VideoCapture(0)
-
+ 
 protoPath = os.path.join("models", "deploy.prototxt")
 modelPath = os.path.join("models",
     "res10_300x300_ssd_iter_140000.caffemodel")
