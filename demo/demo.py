@@ -5,8 +5,9 @@ from align import AlignDlib
 import requests
 import numpy as np
 import threading
-
+import os
 # import face_alignment
+import base64
 import queue
 
 stopped = False
@@ -81,6 +82,10 @@ def draw_image(img,h0,h1,w0,w1,y,proba,name,elapsed):
         cv2.putText(img, text, (w0, y-20),cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1)
         cv2.putText(img, elapsed, (w0, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1)
         # cv2.putText(img, "RPS: "+elapsed, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 1)
+    # retval, buffer = cv2.imencode('.jpg', img)
+    # text = base64.b64encode(buffer)
+    # print(text)
+    # os._exit(0)
     return img
 
 
