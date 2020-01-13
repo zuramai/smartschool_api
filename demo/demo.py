@@ -5,9 +5,8 @@ from align import AlignDlib
 import requests
 import numpy as np
 import threading
-import os
+
 # import face_alignment
-import base64
 import queue
 
 stopped = False
@@ -64,7 +63,7 @@ def get_vector(aligned):
     return vec
 
 def draw_image(img,h0,h1,w0,w1,y,proba,name,elapsed):
-    if int(100 - int(proba * 100)) > 75:
+    if int(100 - int(proba * 100)) > 50:
         cv2.rectangle(img, (w0, h0), (w1, h1), (0, 255, 0), 2)
         landmark = landmarks[idx]
         for i in range(5):
@@ -82,16 +81,12 @@ def draw_image(img,h0,h1,w0,w1,y,proba,name,elapsed):
         cv2.putText(img, text, (w0, y-20),cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1)
         cv2.putText(img, elapsed, (w0, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1)
         # cv2.putText(img, "RPS: "+elapsed, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 1)
-    # retval, buffer = cv2.imencode('.jpg', img)
-    # text = base64.b64encode(buffer)
-    # print(text)
-    # os._exit(0)
     return img
 
 
 def detect(w0,w1,h0,h1,idx, bbox,img):
     score = bbox[4]
-    cropped = img[h0 - 30:h1 + 30, w0 - 30:w1 + 30]
+    cropped = img[h0 - 10:h1 + 10, w0 -10:w1 + 10]
     aligned = align_image(cropped)
     # If out of bound
     try:

@@ -1,7 +1,7 @@
 import warnings
 import pickle
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 import cv2
 from sklearn.preprocessing import LabelEncoder
 import numpy as np
@@ -9,7 +9,7 @@ from align import AlignDlib
 import requests
 from jcopml.utils import save_model, load_model
 
--
+
 def distance(emb1, emb2):
     return np.sum(np.square(emb1 - emb2))
 
@@ -59,6 +59,7 @@ if __name__ == "__main__":
                         res = r.json()
                         name = res["data"]["name"]
                         proba = res["data"]["accuracy"]
+                        print(proba)
                         elapsed = res["data"]["elapsed"]
                     except Exception as e:
                         print(e)

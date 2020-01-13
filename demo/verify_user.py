@@ -16,13 +16,13 @@ def align_image(img):
                            landmarkIndices=AlignDlib.OUTER_EYES_AND_NOSE)
 
 vid = cv2.VideoCapture(0)
- 
+
 protoPath = os.path.join("models", "deploy.prototxt")
 modelPath = os.path.join("models",
     "res10_300x300_ssd_iter_140000.caffemodel")
 
 detector = cv2.dnn.readNetFromCaffe(protoPath, modelPath)
-embedder = cv2.dnn.readNetFromTorch("weights/openface_nn4.small2.v1.t7")
+embedder = cv2.dnn.readNetFromTorch("models/openface_nn4.small2.v1.t7")
 
 user_id = input("User ID : ")
 embeddings = []
@@ -48,10 +48,12 @@ if __name__ == "__main__":
                     face = frame[startY-10:endY+10, startX-10:endX+10]
                     (h,w) =face.shape[:2]
                     aligned = align_image(face)
-                    faceBlob = cv2.dnn.blobFromImage(face, 1.0 / 255,
+                    faceBlob = cv2.dnn.blobFromImage(aligned, 1.0 / 255,
 					(96, 96), (0, 0, 0), swapRB=True, crop=False)
                     embedder.setInput(faceBlob)
                     vec = embedder.forward()
+                    # np.save("test", vec)
+                    # os._exit(0)
                     if cv2.waitKey(1)==ord('c'):
                         embeddings.append(np.array(vec[0]).astype("float64").tolist())
                     cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 4)

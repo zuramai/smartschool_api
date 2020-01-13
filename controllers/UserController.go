@@ -21,7 +21,7 @@ import (
 var users []models.User
 
 func UserIndex(w http.ResponseWriter, r *http.Request) {
-	timeStart := time.Now()
+	// timeStart := time.Now()
 	users := []models.User{}
 	user := models.User{}
 
@@ -37,8 +37,8 @@ func UserIndex(w http.ResponseWriter, r *http.Request) {
 
 		user = models.User{}
 	}
-	timeEnd := time.Since(timeStart)
-	fmt.Println("Time Elapsed: ", timeEnd)
+	// timeEnd := time.Since(timeStart)
+	// fmt.Println("Time Elapsed: ", timeEnd)
 	respondJSON(w, 200, "Success get all data users", users)
 
 }
@@ -176,7 +176,7 @@ func UserV2Verify(w http.ResponseWriter, r *http.Request) {
 
 	if errCheck != nil {
 		fmt.Println("not found", errCheck.Error())
-		fmt.Println("Input string : ", user)
+		// fmt.Println("Input string : ", user)
 		respondJSON(w, 422, "Verify failed", map[string]interface{}{})
 		return
 	}
