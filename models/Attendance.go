@@ -13,8 +13,8 @@ type Attendance struct {
 }
 
 type AttendanceSocket struct {
-	Name string 
-	Time time.Time
+	Name      string
+	Time      time.Time
 	ImageName string
 }
 
@@ -24,6 +24,12 @@ type AttendanceJSON struct {
 	PhotoName string    `json:"photo_name" gorm:"type:varchar(255)"`
 	AttendAt  time.Time `json:"attend_at" gorm:"type:timestamp" sql:"DEFAULT:current_timestamp"`
 	Status    string    `json:"status"`
+}
+
+type AttendanceBody struct {
+	UserID        string `json:"user_id"`
+	PhotoEncoding string `json:"photo"`
+	CameraID      string `json:"camera_id"`
 }
 
 // TableName : Set the name of table Attendance

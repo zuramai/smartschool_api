@@ -37,12 +37,15 @@ type UserJSON struct {
 }
 
 type UserRecognition struct {
-	UserID    string    `json:"user_id"`
-	Name      string    `json:"name"`
-	Accuracy  float64   `json:"accuracy"`
-	Elapsed   string    `json:"elapsed"`
-	Embedding []float64 `json:"embeddings"`
+	UserID        string    `json:"user_id"`
+	Name          string    `json:"name"`
+	Accuracy      float64   `json:"accuracy"`
+	Elapsed       string    `json:"elapsed"`
+	Embedding     []float64 `json:"embeddings"`
+	PhotoEncoding string    `json:"image"`
+	CameraID      string    `json:"camera_id"`
 }
+
 type UserVerify struct {
 	UserID     int         `json:"user_id"`
 	Embeddings [][]float64 `json:"embeddings"`
