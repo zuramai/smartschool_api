@@ -52,7 +52,7 @@ type UserVerify struct {
 }
 
 type UserEmbeddings struct {
-	UserID     string      `json:"user_id", bson:"user_id"`
+	UserID     string      `json:"user_id" bson:"user_id"`
 	Name       string      `json:"name" bson:"name"`
 	Embeddings [][]float64 `json:"embeddings" bson:"embeddings"`
 }

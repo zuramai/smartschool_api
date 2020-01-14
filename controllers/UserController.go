@@ -225,6 +225,7 @@ func UserRecognize(w http.ResponseWriter, r *http.Request) {
 	var recognitionList []models.UserRecognition
 
 	json.NewDecoder(r.Body).Decode(&recognition)
+
 	if len(recognition.Embedding) == 0 {
 		respondErrorValidationJSON(w, 422, "Input Embedding Null", map[string]interface{}{})
 		return
@@ -268,6 +269,8 @@ func UserRecognize(w http.ResponseWriter, r *http.Request) {
 			acculist = append(acculist, value.Accuracy)
 		}
 		res := recognitionList[floats.MinIdx(acculist)]
+		fmt.Println(res.UserID)
+
 		attendanceBody := models.AttendanceBody{
 			UserID:        res.UserID,
 			CameraID:      res.CameraID,

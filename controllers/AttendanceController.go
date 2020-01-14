@@ -48,7 +48,6 @@ func AttendanceV2(w http.ResponseWriter, r *http.Request) {
 }
 
 func newAttendance(w http.ResponseWriter, attendance models.AttendanceBody) (models.Attendance, error) {
-
 	todayFirst, _ := time.Parse("2006-01-02", time.Now().Format("2006-01-02"))
 	todayLast, _ := time.Parse("2006-01-02 15:04:05", time.Now().Format("2006-01-02")+" 23:59:59")
 
@@ -134,6 +133,7 @@ func newAttendance(w http.ResponseWriter, attendance models.AttendanceBody) (mod
 func AttendanceV2New(w http.ResponseWriter, r *http.Request) {
 	attendance := models.AttendanceBody{}
 	errEncode := json.NewDecoder(r.Body).Decode(&attendance)
+
 	if errEncode != nil {
 		panic(errEncode)
 	}
