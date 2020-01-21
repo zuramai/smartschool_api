@@ -1,16 +1,11 @@
 package controllers
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"image/png"
 	"net/http"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/zuramai/smartschool_api/models"
@@ -71,33 +66,33 @@ func newAttendance(w http.ResponseWriter, attendance models.AttendanceBody) (mod
 
 	// cameraID, _ := strconv.ParseInt(r.FormValue("camera_id"), 10, 64)
 
-	timeNowMs := strconv.FormatInt(makeTimestampMilli(), 10)
+	// timeNowMs := strconv.FormatInt(makeTimestampMilli(), 10)
 	timeNow, _ := time.Parse("2006-01-02 15:04:05", time.Now().Format("2006-01-02 15:04:05"))
-	photoName := timeNowMs + ".png"
-	dir, _ := os.Getwd()
-	photoDir := dir + "/assets/images/attendances/" + photoName
-	f, err := os.Create(photoDir)
-	if err != nil {
-		fmt.Println("err", err)
-		return isAttended, err
-	}
-	unbased, erru := base64.StdEncoding.DecodeString(attendance.PhotoEncoding)
-	if erru != nil {
-		fmt.Println("erru", erru)
-		return isAttended, erru
-	}
-	pngI, errp := png.Decode(bytes.NewReader(unbased))
-	if errp != nil {
-		fmt.Println("errp", errp)
-		return isAttended, errp
-	}
-	errr := png.Encode(f, pngI)
-	if errr != nil {
-		fmt.Println("errr", errr)
-		return isAttended, errr
-	}
+	// photoName := timeNowMs + ".png"
+	// dir, _ := os.Getwd()
+	// photoDir := dir + "/assets/images/attendances/" + photoName
+	// f, err := os.Create(photoDir)
+	// if err != nil {
+	// 	fmt.Println("err", err)
+	// 	return isAttended, err
+	// }
+	// unbased, erru := base64.StdEncoding.DecodeString(attendance.PhotoEncoding)
+	// if erru != nil {
+	// 	fmt.Println("erru", erru)
+	// 	return isAttended, erru
+	// }
+	// pngI, errp := png.Decode(bytes.NewReader(unbased))
+	// if errp != nil {
+	// 	fmt.Println("errp", errp)
+	// 	return isAttended, errp
+	// }
+	// errr := png.Encode(f, pngI)
+	// if errr != nil {
+	// 	fmt.Println("errr", errr)
+	// 	return isAttended, errr
+	// }
 
-	defer f.Close()
+	// defer f.Close()
 
 	waktuSekarang, _ := time.Parse("15:04:05", time.Now().Format("15:04:05"))
 	waktuTerlambat, _ := time.Parse("15:04:05", "06:30:00")
@@ -109,10 +104,10 @@ func newAttendance(w http.ResponseWriter, attendance models.AttendanceBody) (mod
 	}
 
 	newAttendance := models.Attendance{
-		UserID:       attendance.UserID,
-		PictureTaken: photoName,
-		AttendAt:     timeNow,
-		Keterangan:   keterangan,
+		UserID: attendance.UserID,
+		// PictureTaken: photoName,
+		AttendAt:   timeNow,
+		Keterangan: keterangan,
 	}
 	// jsonn, _ := json.Marshal(newAttendance)
 

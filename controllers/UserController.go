@@ -273,9 +273,9 @@ func UserRecognize(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(res.UserID)
 
 		attendanceBody := models.AttendanceBody{
-			UserID:        res.UserID,
-			CameraID:      res.CameraID,
-			PhotoEncoding: res.PhotoEncoding,
+			UserID:   res.UserID,
+			CameraID: res.CameraID,
+			// PhotoEncoding: res.PhotoEncoding,
 		}
 
 		log = models.Log{
