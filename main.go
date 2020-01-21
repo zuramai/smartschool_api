@@ -113,6 +113,7 @@ func main() {
 
 	apiV2.HandleFunc("/room_accesss/check", controllers.RoomAccessCheck).Methods("POST")
 	apiV2.HandleFunc("/classroom", controllers.ClassroomV2Index).Methods("GET")
+	apiV2.HandleFunc("/logs", controllers.LogIndex).Methods("GET")
 	apiV2.HandleFunc("/camera", controllers.CameraIndex).Methods("GET")
 	apiV2.HandleFunc("/test", controllers.ImportCsv).Methods("GET")
 

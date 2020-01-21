@@ -223,6 +223,7 @@ func UserRecognize(w http.ResponseWriter, r *http.Request) {
 	var userEmbeddings []models.UserEmbeddings
 	var recognition models.UserRecognition
 	var recognitionList []models.UserRecognition
+	var log models.Log
 
 	json.NewDecoder(r.Body).Decode(&recognition)
 
@@ -276,8 +277,19 @@ func UserRecognize(w http.ResponseWriter, r *http.Request) {
 			CameraID:      res.CameraID,
 			PhotoEncoding: res.PhotoEncoding,
 		}
+
+		log = models.Log{
+			UserID:   res.UserID,
+			CameraID: res.CameraID,
+		}
 		newAttendance(w, attendanceBody)
-		respondJSON(w, 200, "Returned Matching Identities", res)
+		logStore(log)
+		respondJSON(w, 200, "Returned Matching Identities", map[string]interface{}{
+			"user_id":  res.UserID,
+			"name":     res.Name,
+			"accuracy": res.Accuracy,
+			"elapsed":  res.Elapsed,
+		})
 		return
 	}
 }
