@@ -54,7 +54,8 @@ def get_frame():
         # best = videoPafy.getbest()
         # vid = cv2.VideoCapture(best.url)
         # vid = cv2.VideoCapture("rtsp://admin:AWPZEO@192.168.137.78/0/h264_stream")
-        vid = cv2.VideoCapture("C:\\Users\\Athanatius.C\\Downloads\\Video\\LONDON WALK - Oxford Street to Carnaby Street - England.mp4")
+        vid = cv2.VideoCapture(0)
+        # vid = cv2.VideoCapture("C:\\Users\\Athanatius.C\\Downloads\\Video\\LONDON WALK - Oxford Street to Carnaby Street - England.mp4")
         while not stopped:
             ret,frame = vid.read()
             if not ret:
@@ -65,7 +66,7 @@ def get_frame():
             # frames.put(frame)
             if len(frames) >=1:
                 continue
-            frame = cv2.resize(frame, (1280,720), interpolation = cv2.INTER_LANCZOS4)
+            # frame = cv2.resize(frame, (1280,720), interpolation = cv2.INTER_LANCZOS4)
 
             frames.append(frame)
         vid.release()
@@ -125,7 +126,7 @@ if __name__ == "__main__":
                 (h, w) = frame.shape[:2]
             except:
                 continue
-            imageBlob = cv2.dnn.blobFromImage(frame, 1.0, (300, 300), swapRB=False, crop=False)
+            imageBlob = cv2.dnn.blobFromImage(frame, 1.0, (400, 400), swapRB=False, crop=False)
             detector.setInput(imageBlob)
             detections = detector.forward()
             for i in range(0, detections.shape[2]):
