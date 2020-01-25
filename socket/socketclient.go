@@ -33,7 +33,7 @@ func main() {
 
 	go func() {
 		defer close(done)
-		for {
+		for {ten
 			_, message, err := c.ReadMessage()
 			if err != nil {
 				log.Println("read:", err)

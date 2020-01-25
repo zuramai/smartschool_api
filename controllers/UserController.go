@@ -279,9 +279,9 @@ func UserRecognize(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(res.UserID)
 
 		attendanceBody := models.AttendanceBody{
-			UserID:   res.UserID,
-			CameraID: res.CameraID,
-			// PhotoEncoding: res.PhotoEncoding,
+			UserID:        res.UserID,
+			CameraID:      res.CameraID,
+			PhotoEncoding: res.PhotoEncoding,
 		}
 
 		log = models.Log{
@@ -289,7 +289,8 @@ func UserRecognize(w http.ResponseWriter, r *http.Request) {
 			CameraID: res.CameraID,
 		}
 		newAttendance(w, attendanceBody)
-		logStore(log)
+		insertLog := logStore(log)
+		fmt.Println("insert log :", insertLog)
 		respondJSON(w, 200, "Returned Matching Identities", map[string]interface{}{
 			"user_id":  res.UserID,
 			"name":     res.Name,
