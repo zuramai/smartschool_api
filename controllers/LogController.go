@@ -31,18 +31,28 @@ func LogStore(w http.ResponseWriter, r *http.Request) {
 }
 
 func logStore(log models.Log) bool {
-	var checkLog models.Log
-	err := models.GetDB("main").Collection("users").FindOne(context.TODO(), bson.M{"user_id": log.UserID}).Decode(&checkLog)
+	var checkUser models.Log
+	err := models.GetDB("main").Collection("users").FindOne(context.TODO(), bson.M{"user_id": log.UserID}).Decode(&checkUser)
 
 	if err != nil {
 		// no data
-		models.GetDB("main").Collection("users").InsertOne(context.TODO(), &log)
 		return true
 	}
 
 	timeNow, _ := time.Parse("2006-01-02 15:04:05", time.Now().Format("2006-01-02 15:04:05"))
 
-	models.GetDB("main").Collection("logs").UpdateOne(context.TODO(), bson.M{"user_id": log.UserID}, bson.M{"camera_id": log.CameraID, "last_updated": timeNow})
+	updateResult, errU := models.GetDB("main").Collection("logs").UpdateOne(context.TODO(), bson.M{"user_id": checkUser.ID.Hex()}, bson.M{"$set": bson.M{"camera_id": log.CameraID, "last_updated": timeNow}})
+	
+	if updateResult.MatchedCount == 0 {
+		_, err := models.GetDB("main").Collection("logs").InsertOne(context.TODO(), bson.M{"user_id": checkUser.ID.Hex(), "camera_id": log.CameraID, "last_updated": timeNow})
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+	if errU != nil {
+		fmt.Println(errU)
+		fmt.Println(updateResult)
+	}
 	return false
 }
 
