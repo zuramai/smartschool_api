@@ -1,4 +1,5 @@
 import warnings
+from sklearn.svm import LinearSVC
 import pickle
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
@@ -7,31 +8,36 @@ from sklearn.preprocessing import LabelEncoder
 import numpy as np
 from align import AlignDlib
 import requests
-from jcopml.utils import save_model, load_model
-import base64
-
-def distance(emb1, emb2):
-    return np.sum(np.square(emb1 - emb2))
+import json
 
 alignment = AlignDlib('models\\landmarks.dat')
 def align_image(img):
     return alignment.align(96, img, alignment.getLargestFaceBoundingBox(img), 
                            landmarkIndices=AlignDlib.OUTER_EYES_AND_NOSE)
 
-
 vid = cv2.VideoCapture(0)
-# vid = cv2.VideoCapture("rtsp://admin:AWPZEO@192.168.1.66/0/h264_stream")
 
-model = load_model ("C:\\Users\\Athanatius.C\\Tensorflow\\Face Recognition\\Model\\SRCV-core.vcore")
 protoPath = os.path.join("models", "deploy.prototxt")
 modelPath = os.path.join("models",
     "res10_300x300_ssd_iter_140000.caffemodel")
+
 detector = cv2.dnn.readNetFromCaffe(protoPath, modelPath)
 embedder = cv2.dnn.readNetFromTorch("models/openface_nn4.small2.v1.t7")
 
+user_id = input("User ID : ")
+embeddings = []
+
+base = "C:\\Users\\Athanatius.C\\Pictures\\Dataset\\Geo"
+images = os.listdir(base)
+# for image in images:
+#     print("{}".format(os.path.join(base,image)))
+
+
+# os._exit(0)
 if __name__ == "__main__":
-    while True:
-        _,frame = vid.read()
+    # print(metadata)
+    for path in images:
+        frame = cv2.imread(os.path.join(base,path))
         try:
             (h, w) = frame.shape[:2]
         except:
@@ -49,37 +55,25 @@ if __name__ == "__main__":
                     face = frame[startY-10:endY+10, startX-10:endX+10]
                     (h,w) =face.shape[:2]
                     aligned = align_image(face)
-
                     faceBlob = cv2.dnn.blobFromImage(aligned, 1.0 / 255,
 					(96, 96), (0, 0, 0), swapRB=True, crop=False)
                     embedder.setInput(faceBlob)
                     vec = embedder.forward()
-                    try:
-                        r = requests.post(url="http://localhost:8088/api/v2/user/recognize",json= {"embeddings":np.array(vec[0]).astype("float64").tolist()})
-                        res = r.json()
-                        name = res["data"]["name"]
-                        proba = res["data"]["accuracy"]
-                        elapsed = res["data"]["elapsed"]
-                    except Exception as e:
-                        print(e)
-                    if int(100-int(proba*100)) > 80:
-                        cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 4)
-                        text = name + " " + str(int(100 - int(proba * 100))) + "%"
-                        cv2.putText(frame, text, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 1)
-                        cv2.putText(frame, "RPS: "+elapsed, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 1)
-                    else:
-                        cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 0, 255), 4)
-                        text = "Unknown "+str(int(100-int(proba*100)))+"%"
-                        cv2.putText(frame, text, (startX, y),cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1)
-                    retval, buffer = cv2.imencode('.jpg', frame)
-                    text = base64.b64encode(buffer)
-                    print(text.decode('utf-8'))
-                    os._exit(0)
+                    # np.save("test", vec)
+                    # os._exit(0)
+                    # if cv2.waitKey(1)==ord('c'):
+                    embeddings.append(np.array(vec[0]).astype("float64").tolist())
+                    cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 4)
                 except Exception as e:
-                    pass
-        cv2.imshow("window",frame)
+                    print(e)
+                    pass              
+        cv2.imshow("window", frame)
         k = cv2.waitKey(5) & 0xFF
-        if k == 27:
+        if k == 27 or len(embeddings) == 20:
             vid.release()
             cv2.destroyAllWindows()
             break
+print(embeddings[0][0])
+r = requests.post(url="http://172.10.0.57:8088/api/v2/user/verify",json= {"user_id":int(user_id),"embeddings":np.array(embeddings).astype("float64").tolist()})
+res = r.json()
+print(res)

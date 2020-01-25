@@ -20,11 +20,11 @@ def align_image(img):
     return alignment.align(96, img, alignment.getLargestFaceBoundingBox(img), 
                            landmarkIndices=AlignDlib.OUTER_EYES_AND_NOSE)
 
-def background():
-	while datas.not_empty:
-		tracked.put(send.track(datas.get()))
-		tracked.task_done()
-		time.sleep(3)
+# def background():
+# 	while datas.not_empty:
+# 		tracked.put(send.track(datas.get()))
+# 		tracked.task_done()
+# 		time.sleep(3)
 
 def get_frame():
     try:
@@ -51,7 +51,7 @@ def recognize_face(vec):
     except Exception as e:
         print(e)
     return proba, name, elapsed
-    
+
 def get_vector(aligned):
     try:
         faceBlob = cv2.dnn.blobFromImage(aligned, 1.0 / 255,
@@ -63,7 +63,7 @@ def get_vector(aligned):
     return vec
 
 def draw_image(img,h0,h1,w0,w1,y,proba,name,elapsed):
-    if int(100 - int(proba * 100)) > 50:
+    if int(100 - int(proba * 100)) > 75:
         cv2.rectangle(img, (w0, h0), (w1, h1), (0, 255, 0), 2)
         landmark = landmarks[idx]
         for i in range(5):
@@ -86,7 +86,7 @@ def draw_image(img,h0,h1,w0,w1,y,proba,name,elapsed):
 
 def detect(w0,w1,h0,h1,idx, bbox,img):
     score = bbox[4]
-    cropped = img[h0 - 10:h1 + 10, w0 -10:w1 + 10]
+    cropped = img[h0 - 30:h1 + 30, w0 - 30:w1 + 30]
     aligned = align_image(cropped)
     # If out of bound
     try:

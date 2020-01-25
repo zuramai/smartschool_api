@@ -54,8 +54,8 @@ if __name__ == "__main__":
                     vec = embedder.forward()
                     # np.save("test", vec)
                     # os._exit(0)
-                    if cv2.waitKey(1)==ord('c'):
-                        embeddings.append(np.array(vec[0]).astype("float64").tolist())
+                    # if cv2.waitKey(1)==ord('c'):
+                    embeddings.append(np.array(vec[0]).astype("float64").tolist())
                     cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 4)
                 except Exception as e:
                     print(e)
@@ -67,6 +67,6 @@ if __name__ == "__main__":
             cv2.destroyAllWindows()
             break
 print(embeddings[0][0])
-r = requests.post(url="http://localhost:8088/api/v2/user/verify",json= {"user_id":int(user_id),"embeddings":np.array(embeddings).astype("float64").tolist()})
+r = requests.post(url="http://172.10.0.57:8088/api/v2/user/verify",json= {"user_id":int(user_id),"embeddings":np.array(embeddings).astype("float64").tolist()})
 res = r.json()
 print(res)
