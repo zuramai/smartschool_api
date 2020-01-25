@@ -1,18 +1,33 @@
 package controllers
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/zuramai/smartschool_api/models"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 var cameras []models.Camera
 
 func CameraIndex(w http.ResponseWriter, r *http.Request) {
-	// search := r.URL.Query().Get("search")
-	// _, perPage, offset := u.Paginate(r)
-	// models.GetDB("main").Where("name LIKE ?", "%"+search+"%").Offset(offset).Limit(perPage).Order("id asc").Find(&cameras)
-	// respondJSON(w, 200, "Success get all data camera, search: "+search, cameras)
+	var camera models.Camera
+	var cameras []models.Camera
+	cursor, err := models.GetDB("main").Collection("cameras").Find(context.TODO(), bson.M{})
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for cursor.Next(context.TODO()) {
+		cursor.Decode(&camera)
+		cameras = append(cameras, camera)
+		camera = models.Camera{}
+	}
+
+	respondJSON(w, 200, "Get All Data Camera", cameras)
+	return
 }
 
 func CameraStore(w http.ResponseWriter, r *http.Request) {

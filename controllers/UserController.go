@@ -155,6 +155,7 @@ func UserV2Detail(w http.ResponseWriter, r *http.Request) {
 func UserV2Verify(w http.ResponseWriter, r *http.Request) {
 	var user models.UserVerify
 	var checkUser models.User
+	var checkUserValidation models.User
 	// photo, _, errFile := r.FormFile("photo")
 	// if errFile != nil {
 	// 	respondErrorValidationJSON(w, 422, "Error", map[string]interface{}{
@@ -163,6 +164,17 @@ func UserV2Verify(w http.ResponseWriter, r *http.Request) {
 	// }
 	// fmt.Println(r.Body)
 	err := json.NewDecoder(r.Body).Decode(&user)
+	stringUserID := strconv.Itoa(user.UserID)
+
+	errCheckUser := models.GetDB("main").Collection("users").FindOne(context.TODO(), bson.M{"user_id": stringUserID}).Decode(&checkUserValidation)
+	if errCheckUser != nil {
+		fmt.Println(errCheckUser)
+	}
+	if checkUserValidation.Status == 1 {
+		respondJSON(w, 422, "You are already verified", map[string]interface{}{})
+		return
+	}
+	fmt.Println(checkUser)
 
 	if err != nil && err != io.EOF {
 		// fmt.Println(err)
@@ -170,14 +182,19 @@ func UserV2Verify(w http.ResponseWriter, r *http.Request) {
 		respondJSON(w, 422, "Error", map[string]interface{}{})
 		return
 	}
-	stringUserID := strconv.Itoa(user.UserID)
 	// fmt.Println(user)
 	errCheck := models.GetDB("main").Collection("users").FindOneAndUpdate(context.TODO(), bson.M{"user_id": stringUserID}, bson.M{"$set": bson.M{"embeddings": user.Embeddings, "status": 1}}).Decode(&checkUser)
 
 	if errCheck != nil {
+<<<<<<< HEAD
 		fmt.Println("not found", errCheck.Error())
 		// fmt.Println("Input string : ", user)
 		respondJSON(w, 422, "Verify failed", map[string]interface{}{})
+=======
+		fmt.Println("not found", errCheck)
+		fmt.Println("Input string : ", user)
+		respondJSON(w, 422, "Verify failed "+errCheck.Error(), map[string]interface{}{})
+>>>>>>> 9b45fd1bf75b7628db04a8c9c3a9473767d0d124
 		return
 	}
 
@@ -212,8 +229,10 @@ func UserRecognize(w http.ResponseWriter, r *http.Request) {
 	var userEmbeddings []models.UserEmbeddings
 	var recognition models.UserRecognition
 	var recognitionList []models.UserRecognition
+	var log models.Log
 
 	json.NewDecoder(r.Body).Decode(&recognition)
+
 	if len(recognition.Embedding) == 0 {
 		respondErrorValidationJSON(w, 422, "Input Embedding Null", map[string]interface{}{})
 		return
@@ -256,7 +275,27 @@ func UserRecognize(w http.ResponseWriter, r *http.Request) {
 		for _, value := range recognitionList {
 			acculist = append(acculist, value.Accuracy)
 		}
-		respondJSON(w, 200, "Returned Matching Identities", recognitionList[floats.MinIdx(acculist)])
+		res := recognitionList[floats.MinIdx(acculist)]
+		fmt.Println(res.UserID)
+
+		attendanceBody := models.AttendanceBody{
+			UserID:   res.UserID,
+			CameraID: res.CameraID,
+			// PhotoEncoding: res.PhotoEncoding,
+		}
+
+		log = models.Log{
+			UserID:   res.UserID,
+			CameraID: res.CameraID,
+		}
+		newAttendance(w, attendanceBody)
+		logStore(log)
+		respondJSON(w, 200, "Returned Matching Identities", map[string]interface{}{
+			"user_id":  res.UserID,
+			"name":     res.Name,
+			"accuracy": res.Accuracy,
+			"elapsed":  res.Elapsed,
+		})
 		return
 	}
 }
@@ -279,7 +318,7 @@ func UserV2EmbeddingsClear(w http.ResponseWriter, r *http.Request) {
 
 func UserV2EmbeddingsClearOnUser(w http.ResponseWriter, r *http.Request) {
 	userID := mux.Vars(r)["id"]
-	res, err := models.GetDB("main").Collection("users").UpdateMany(context.TODO(), bson.M{"user_id": userID}, bson.M{"$set": bson.M{"embeddings": ""}})
+	res, err := models.GetDB("main").Collection("users").UpdateOne(context.TODO(), bson.M{"user_id": userID}, bson.M{"$set": bson.M{"embeddings": ""}})
 	if err != nil {
 		fmt.Println(err)
 	}
