@@ -272,19 +272,22 @@ func UserRecognize(w http.ResponseWriter, r *http.Request) {
 		res := recognitionList[floats.MinIdx(acculist)]
 		fmt.Println(res.UserID)
 
-		attendanceBody := models.AttendanceBody{
-			UserID:        res.UserID,
-			CameraID:      res.CameraID,
-			PhotoEncoding: res.PhotoEncoding,
+		if res.Accuracy <= 0.2 {
+			attendanceBody := models.AttendanceBody{
+				UserID:        res.UserID,
+				CameraID:      res.CameraID,
+				PhotoEncoding: res.PhotoEncoding,
+			}
+
+			log = models.Log{
+				UserID:   res.UserID,
+				CameraID: res.CameraID,
+			}
+			newAttendance(w, attendanceBody)
+			insertLog := logStore(log)
+			fmt.Println("insert log :", insertLog)
 		}
 
-		log = models.Log{
-			UserID:   res.UserID,
-			CameraID: res.CameraID,
-		}
-		newAttendance(w, attendanceBody)
-		insertLog := logStore(log)
-		fmt.Println("insert log :", insertLog)
 		respondJSON(w, 200, "Returned Matching Identities", map[string]interface{}{
 			"user_id":  res.UserID,
 			"name":     res.Name,
