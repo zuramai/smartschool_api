@@ -1,7 +1,6 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 import cv2
-from cv2.dnn import blobFromImage
 import numpy as np
 from align import AlignDlib
 import requests
@@ -10,12 +9,15 @@ from flask_opencv_streamer.streamer import Streamer
 from face_detect import MTCNN
 from cv2 import rectangle
 from threading import Thread
+from queue import Queue
 import time
 import pafy
 
 class CyberNet:
     def __init__(self):
-        self.api = []
+        # self.api = []
+        self.api = Queue(maxsize=10)
+        # self.frames = Queue(maxsize=10)
         self.frames = []
         self.port = 4040
         self.frame = None
@@ -47,15 +49,11 @@ class CyberNet:
 
     def background_sender(self):
         while not self.stopped:
-            if len(self.api) != 0:
+            if self.api.not_empty:
                 try:
-                    crop = self.api.pop(0)
+                    crop = self.api.get()
                     aligned = self.align_image(crop)
-                    # cv2.imshow("aligned", aligned)
-                    # k = cv2.waitKey(1) & 0xFF
-                    # if k == 27:
-                    #     pass
-                    faceBlob = blobFromImage(aligned, 1.0 / 255, (96, 96), (0, 0, 0), swapRB=True, crop=False)
+                    faceBlob = cv2.dnn.blobFromImage(aligned, 1.0 / 255, (96, 96), (0, 0, 0), swapRB=True, crop=False)
                     self.embedder.setInput(faceBlob)
                     vec = self.embedder.forward()
                     retval,buffer = cv2.imencode(".png",crop )
@@ -74,14 +72,16 @@ class CyberNet:
                             res = r.json()
                             name = res["data"]["name"]
                             accuracy = res["data"]["accuracy"]
-                            if accuracy < 0.2:
-                                print("Detected : {} Accuracy : {}".format(name,accuracy))      
+                            # if accuracy < 0.2:
+                            print("Detected : {} Accuracy : {}".format(name,accuracy))      
                             failed = False
                         except Exception as e:
                             print(e)
                             failed = True
+                    # print("Sent")
                 except Exception as e:
-                    print(e)
+                    # print(e)
+                    # print("not sent. Continuing")
                     continue
 
     def get_frame(self):
@@ -101,12 +101,38 @@ class CyberNet:
                     if not ret:
                         print("Frame get failed")
                         break
-                    if len(self.frames) >=10:
+                    if len(self.frames) >=20:
                         continue
                     self.frames.append(frm)
                 vid.release()
         except Exception as e:
             # print(e)
+            pass
+
+    def helper(self,idx, bbox,w,h,landmarks):
+        h0 = max(int(round(bbox[0])), 0)
+        w0 = max(int(round(bbox[1])), 0)
+        h1 = min(int(round(bbox[2])), h - 1)
+        w1 = min(int(round(bbox[3])), w - 1)
+        try:
+            score = bbox[4]
+            cropped = self.last_frame[h0 - 30:h1 + 30, w0 - 30:w1 + 30]
+            if self.api.not_full:
+                # print(self.api.qsize())
+                self.api.put(cropped)
+            else:
+                pass
+            y = h0 - 10 if h0 - 10 > 10 else h0 + 10
+            rectangle(self.frame, (w0, h0), (w1, h1), (255, 255, 255), 1)
+            landmark = landmarks[idx]
+            for i in range(5):
+                pt_h = landmark[i]
+                pt_w = landmark[i + 5]
+                if 0 <= pt_h and pt_h < h and 0 <= pt_w and pt_w < w:
+                    cv2.circle(self.frame, (pt_w, pt_h), 1, (255, 255, 255),
+                            thickness=1)
+        except Exception as e:
+            print(e)
             pass
 
     def main(self):
@@ -124,54 +150,34 @@ class CyberNet:
                         onet_model_path)
 
         while not self.stopped:
+            # try:
+            if len(self.frames) == 0:
+                self.frame = self.last_frame
+            else:
+                self.last_frame = self.frames.pop()
+                self.frame = self.last_frame.copy()
+                # del frames[0]
+                (h, w) = self.frame.shape[:2]
+                # start = time.time()
+                bounding_boxes, landmarks = mtcnn.detect(
+                    img=self.frame, min_size=80, factor=0.709,
+                    score_threshold=[0.8, 0.8, 0.8]
+                )
+                # print("Mtcnn took {}".format(time.time()-start))
+                threadlist = []
+                for idx, bbox in enumerate(bounding_boxes):
+                    threadlist.append(Thread(target=self.helper(idx, bbox,w,h,landmarks)))
+                for thread in threadlist:
+                    thread.start()
+                for thread in threadlist:
+                    thread.join()
             try:
-                if len(self.frames) == 0:
-                    self.frame = self.last_frame
-                else:
-                    self.frame = self.frames.pop()
-                    self.last_frame = self.frame.copy()
-                    # del frames[0]
-                    (h, w) = self.frame.shape[:2]
-                    start = time.time()
-                    bounding_boxes, landmarks = mtcnn.detect(
-                        img=self.frame, min_size=80, factor=0.709,
-                        score_threshold=[0.8, 0.8, 0.8]
-                    )
-                    print("Mtcnn took {}".format(time.time()-start))
-                    for idx, bbox in enumerate(bounding_boxes):
-                        h0 = max(int(round(bbox[0])), 0)
-                        w0 = max(int(round(bbox[1])), 0)
-                        h1 = min(int(round(bbox[2])), h - 1)
-                        w1 = min(int(round(bbox[3])), w - 1)
-                        # threadlist = []
-                        try:
-                            score = bbox[4]
-                            cropped = self.last_frame[h0 - 30:h1 + 30, w0 - 30:w1 + 30]
-                            # if len(self.api) < 10:
-                            #     self.api.append(cropped)
-                            y = h0 - 10 if h0 - 10 > 10 else h0 + 10
-                            # self.frame = self.draw_image(self.frame,h0,h1,w0,w1,y,h,w,landmarks,idx)
-                            rectangle(self.frame, (w0, h0), (w1, h1), (255, 255, 255), 1)
-                            # landmark = landmarks[idx]
-                            # for i in range(5):
-                            #     pt_h = landmark[i]
-                            #     pt_w = landmark[i + 5]
-                            #     if 0 <= pt_h and pt_h < h and 0 <= pt_w and pt_w < w:
-                            #         cv2.circle(self.frame, (pt_w, pt_h), 1, (255, 255, 255),
-                            #                 thickness=2)
-                        except Exception as e:
-                            print(e)
-                            pass
-            except Exception as e:
-                print(e)
-                pass
-            try:
-                cv2.imshow("window",self.frame)
+                # cv2.imshow("window",self.frame)
                 self.streamer.update_frame(self.frame)
                 if not self.streamer.is_streaming:
                     self.streamer.start_streaming()
             except Exception as e:
-                print(e)
+                # print(e)
                 pass
             k = cv2.waitKey(1) & 0xFF
             if k == 27:
