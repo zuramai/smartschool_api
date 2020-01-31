@@ -186,15 +186,12 @@ func UserV2Verify(w http.ResponseWriter, r *http.Request) {
 	errCheck := models.GetDB("main").Collection("users").FindOneAndUpdate(context.TODO(), bson.M{"user_id": stringUserID}, bson.M{"$set": bson.M{"embeddings": user.Embeddings, "status": 1}}).Decode(&checkUser)
 
 	if errCheck != nil {
-<<<<<<< HEAD
 		fmt.Println("not found", errCheck.Error())
 		// fmt.Println("Input string : ", user)
 		respondJSON(w, 422, "Verify failed", map[string]interface{}{})
-=======
 		fmt.Println("not found", errCheck)
 		fmt.Println("Input string : ", user)
 		respondJSON(w, 422, "Verify failed "+errCheck.Error(), map[string]interface{}{})
->>>>>>> 9b45fd1bf75b7628db04a8c9c3a9473767d0d124
 		return
 	}
 
@@ -278,19 +275,22 @@ func UserRecognize(w http.ResponseWriter, r *http.Request) {
 		res := recognitionList[floats.MinIdx(acculist)]
 		fmt.Println(res.UserID)
 
-		attendanceBody := models.AttendanceBody{
-			UserID:        res.UserID,
-			CameraID:      res.CameraID,
-			PhotoEncoding: res.PhotoEncoding,
+		if res.Accuracy <= 0.2 {
+			attendanceBody := models.AttendanceBody{
+				UserID:        res.UserID,
+				CameraID:      res.CameraID,
+				PhotoEncoding: res.PhotoEncoding,
+			}
+
+			log = models.Log{
+				UserID:   res.UserID,
+				CameraID: res.CameraID,
+			}
+			newAttendance(w, attendanceBody)
+			insertLog := logStore(log)
+			fmt.Println("insert log :", insertLog)
 		}
 
-		log = models.Log{
-			UserID:   res.UserID,
-			CameraID: res.CameraID,
-		}
-		newAttendance(w, attendanceBody)
-		insertLog := logStore(log)
-		fmt.Println("insert log :", insertLog)
 		respondJSON(w, 200, "Returned Matching Identities", map[string]interface{}{
 			"user_id":  res.UserID,
 			"name":     res.Name,

@@ -27,7 +27,7 @@ embedder = cv2.dnn.readNetFromTorch("models/openface_nn4.small2.v1.t7")
 user_id = input("User ID : ")
 embeddings = []
 
-base = "C:\\Users\\Athanatius.C\\Pictures\\Dataset\\Geo"
+base = "C:\\Users\\Athanatius.C\\Pictures\\Dataset\\Lexi"
 images = os.listdir(base)
 # for image in images:
 #     print("{}".format(os.path.join(base,image)))
@@ -73,7 +73,7 @@ if __name__ == "__main__":
             vid.release()
             cv2.destroyAllWindows()
             break
-print(embeddings[0][0])
+# print(embeddings[0][0])
 r = requests.post(url="http://172.10.0.57:8088/api/v2/user/verify",json= {"user_id":int(user_id),"embeddings":np.array(embeddings).astype("float64").tolist()})
-res = r.json()
-print(res)
+# res = r.json()
+print(r.json())

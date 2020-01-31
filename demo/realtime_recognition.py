@@ -53,7 +53,7 @@ def get_frame():
         # videoPafy = pafy.new(url)
         # best = videoPafy.getbest()
         # vid = cv2.VideoCapture(best.url)
-        # vid = cv2.VideoCapture("rtsp://admin:AWPZEO@192.168.137.78/0/h264_stream")
+        # vid = cv2.VideoCapture("rtsp://admin:AWPZEO@192.168.137.212/0/h264_stream")
         vid = cv2.VideoCapture(0)
         # vid = cv2.VideoCapture("C:\\Users\\Athanatius.C\\Downloads\\Video\\LONDON WALK - Oxford Street to Carnaby Street - England.mp4")
         while not stopped:
@@ -78,12 +78,20 @@ def send_api():
     while not stopped:
         if api.not_empty:
             try:
-                aligned = align_image(api.get())
-                faceBlob = cv2.dnn.blobFromImage(aligned, 1.0 / 255,
-                (96, 96), (0, 0, 0), swapRB=True, crop=False)
+                crop = api.get()
+                aligned = align_image(crop)
+                # cv2.imshow("aligned", aligned)
+                # k = cv2.waitKey(1) & 0xFF
+                # if k == 27:
+                #     continue
+                try:
+                    faceBlob = cv2.dnn.blobFromImage(aligned, 1.0 / 255, (96, 96), (0, 0, 0), swapRB=True, crop=False)
+                except Exception as e:
+                    # print(e)
+                    continue
                 embedder.setInput(faceBlob)
                 vec = embedder.forward()
-                retval,buffer = cv2.imencode(".png", aligned)
+                retval,buffer = cv2.imencode(".png", crop)
                 string_bytes = base64.b64encode(buffer)
                 data = {"image": string_bytes.decode('utf-8'), "camera_id": "5d522f6f16171e56f400246e", "embeddings": np.array(vec[0]).astype("float64").tolist()}
                 failed = True
@@ -102,9 +110,10 @@ def send_api():
                             print("Detected : {} Accuracy : {}".format(name,accuracy))      
                         failed = False
                     except Exception as e:
-                        print(e)
+                        # print(e)
                         failed = True
             except Exception as e:
+                # print(e)
                 continue
 
 if __name__ == "__main__":

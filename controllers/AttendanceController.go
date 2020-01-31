@@ -72,7 +72,8 @@ func newAttendance(w http.ResponseWriter, attendance models.AttendanceBody) (mod
 	// cameraID, _ := strconv.ParseInt(r.FormValue("camera_id"), 10, 64)
 
 	timeNowMs := strconv.FormatInt(makeTimestampMilli(), 10)
-	timeNow, _ := time.Parse("2006-01-02 15:04:05", time.Now().Format("2006-01-02 15:04:05"))
+	loc, _ := time.LoadLocation("Asia/Jakarta")
+	timeNow, _ := time.Parse("2006-01-02 15:04:05", time.Now().In(loc).Format("2006-01-02 15:04:05"))
 	photoName := timeNowMs + ".png"
 	// dir, _ := os.Getwd()
 	photoDir := "C:/xampp2/htdocs/laravel/SmartSchool/public/images/attendance/" + photoName
@@ -99,14 +100,13 @@ func newAttendance(w http.ResponseWriter, attendance models.AttendanceBody) (mod
 	}
 
 	defer f.Close()
-
-	waktuSekarang, _ := time.Parse("15:04:05", time.Now().Format("15:04:05"))
+	waktuSekarang, _ := time.Parse("15:04:05", time.Now().In(loc).Format("15:04:05"))
 	waktuTerlambat, _ := time.Parse("15:04:05", "06:30:00")
 	var keterangan string
 	if waktuSekarang.After(waktuTerlambat) {
-		keterangan = "Tepat Waktu"
-	} else {
 		keterangan = "Terlambat"
+	} else {
+		keterangan = "Tepat Waktu"
 	}
 
 	newAttendance := models.Attendance{
