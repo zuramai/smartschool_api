@@ -58,7 +58,7 @@ if __name__ == "__main__":
                     embeddings.append(np.array(vec[0]).astype("float64").tolist())
                     cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 4)
                 except Exception as e:
-                    print(e)
+                    # print(e)
                     pass              
         cv2.imshow("window", frame)
         k = cv2.waitKey(5) & 0xFF
