@@ -134,6 +134,21 @@ def main():
             pose_estimator.draw_annotation_box(
                 frame, steady_pose[0], steady_pose[1], color=(128, 255, 128))
 
+            x = steady_pose[0][0]
+            y = steady_pose[0][1]
+            z = steady_pose[0][2]
+
+            print(x,y,z)
+            if x > 0:
+                text = "Right"
+            elif x < 0:
+                text = "Left"
+            if y > 0:
+                text +" Down"
+            elif y< 0:
+                text. + " Up"
+            print(x)
+            cv2.putText(frame,text,(100,100),cv2.FONT_HERSHEY_PLAIN,0.6,(0,0,0),1)
             # Uncomment following line to draw head axes on frame.
             # pose_estimator.draw_axes(frame, stabile_pose[0], stabile_pose[1])
 
@@ -143,7 +158,7 @@ def main():
             break
 
     # Clean up the multiprocessing process.
-    box_process.terminate()
+    # box_process.terminate()
     box_process.join()
 
 

@@ -27,7 +27,7 @@ embedder = cv2.dnn.readNetFromTorch("models/openface_nn4.small2.v1.t7")
 user_id = input("User ID : ")
 embeddings = []
 
-base = "C:\\Users\\Athanatius.C\\Pictures\\Dataset\\Lexi"
+base = "C:\\Users\\Athanatius.C\\Pictures\\Dataset\\Bafaqih"
 images = os.listdir(base)
 # for image in images:
 #     print("{}".format(os.path.join(base,image)))

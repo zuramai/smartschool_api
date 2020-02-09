@@ -15,8 +15,7 @@ import (
 
 func main() {
 	p := pipe.Line(
-		pipe.Exec("conda", "activate"),
-		pipe.Exec("python", "realtime_recognition.py"),
+		pipe.Exec("python", "CyberNet.py"),
 	)
 	output, err := pipe.CombinedOutput(p)
 	fmt.Println(string(output))
