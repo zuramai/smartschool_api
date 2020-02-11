@@ -146,7 +146,7 @@ def main():
             if y > 0:
                 text +" Down"
             elif y< 0:
-                text. + " Up"
+                text + " Up"
             print(x)
             cv2.putText(frame,text,(100,100),cv2.FONT_HERSHEY_PLAIN,0.6,(0,0,0),1)
             # Uncomment following line to draw head axes on frame.

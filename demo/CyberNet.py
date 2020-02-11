@@ -7,18 +7,16 @@ from face_detect import MTCNN
 from cv2 import rectangle
 from threading import Thread
 from queue import Queue
-from multiprocessing import Process, Lock
-# import grequests
+from multiprocessing import Process, Lock, Pool
+# import aiohttp
+# import asyncio
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 class CyberNet:
     def __init__(self):
-        # self.api = []
         self.api = Queue(maxsize=20)
         self.frames = Queue(maxsize=10)
-        # self.frames = []
-        # self.frames_queue = Queue(maxsize=20)
         self.port = 4040
         self.frame = None
         self.last_frame = None
@@ -60,27 +58,18 @@ class CyberNet:
                     retval,buffer = cv2.imencode(".png",crop )
                     string_bytes = b64encode(buffer)
                     data = {"image": string_bytes.decode('utf-8'), "camera_id": "5d522f6f16171e56f400246e", "embeddings": np.array(vec[0]).astype("float64").tolist()}
-                    # r = requests.post(url="http://172.10.0.57:8088/api/v2/user/recognize", json=data)                   
                     r = requests.post(url="http://localhost:8088/api/v2/user/recognize", json=data)
                     res = r.json()
                     name = res["data"]["name"]
                     accuracy = res["data"]["accuracy"]
-                    # if accuracy < 0.2:
                     print("Detected : {} Accuracy : {}".format(name,accuracy))
                     lock.release
-                        #     failed = False
-                        # except Exception as e:
-                        #     print(e)
-                        #     failed = True
-                    # print("Sent")
                 except Exception as e:
-                    # print(e)
-                    # print("not sent. Continuing")
                     pass
 
-    def send(self, lock,crop):
+    def send(self,crop):
         try:
-            lock.acquire
+            # lock.acquire
             aligned = self.align_image(crop)
             try:
                 faceBlob = cv2.dnn.blobFromImage(aligned, 1.0 / 255, (96, 96), (0, 0, 0), swapRB=True, crop=False)
@@ -91,12 +80,12 @@ class CyberNet:
             retval,buffer = cv2.imencode(".png",crop )
             string_bytes = b64encode(buffer)
             data = {"image": string_bytes.decode('utf-8'), "camera_id": "5d522f6f16171e56f400246e", "embeddings": np.array(vec[0]).astype("float64").tolist()}
-            # requests.post(url="http://172.10.0.57:8088/api/v2/user/recognize", json=data)                   
             requests.post(url="http://localhost:8088/api/v2/user/recognize", json=data) 
-            lock.release
         except Exception as e:
             print(e)
             return
+        # lock.release
+
 
     def get_frame(self):
         try:
@@ -117,15 +106,10 @@ class CyberNet:
                         break
                     if self.frames.not_full:
                         self.frames.put(frm)
-
-                        # continue
-                    # self.frames.append(frm)
-                    # self.frames_queue.put(frm)
                 vid.release()
         except Exception as e:
-            # print(e)
             pass
-
+        
     def helper(self,idx, bbox,w,h,landmarks):
         h0 = max(int(round(bbox[0])), 0)
         w0 = max(int(round(bbox[1])), 0)
@@ -134,13 +118,10 @@ class CyberNet:
         try:
             score = bbox[4]
             cropped = self.frame[h0 - 30:h1 + 30, w0 - 30:w1 + 30]
-            # if not self.api.full():
-            #     self.api.put(cropped)
-            # elif self.api.full():
-            #     pass
             lock = Lock()
-            p = Process(target=self.send(lock, cropped))
-            p.daemon = True
+            Thread(target=self.send, args=(cropped)).start()
+            # p = Process(target=self.send(lock, cropped))
+            # p.start()
             y = h0 - 10 if h0 - 10 > 10 else h0 + 10
             rectangle(self.frame, (w0, h0), (w1, h1), (255, 255, 255), 1)
             landmark = landmarks[idx]
@@ -150,18 +131,16 @@ class CyberNet:
                 if 0 <= pt_h and pt_h < h and 0 <= pt_w and pt_w < w:
                     cv2.circle(self.frame, (pt_w, pt_h), 1, (255, 255, 255),
                             thickness=1)
-            # self.join()
+            # p.join()
+            # async with aiohttp.ClientSession() as session:
+            #     res = await self.send(lock, cropped)
+            #     print(res)
         except Exception as e:
             print(e)
             pass
 
     def main(self):
         if __name__ == "__main__":
-            # lock = Lock()
-            # background_api = Process(target=self.background_sender,args=(lock,))
-            # background_api.daemon = True
-            # background_api.start()
-
             capture = Thread(target=self.get_frame)
             capture.start()
 
@@ -180,8 +159,16 @@ class CyberNet:
                         img=self.frame, min_size=80, factor=0.709,
                         score_threshold=[0.8, 0.8, 0.8]
                     )
+                    # processes = []
+                    # lock = Lock()
                     for idx, bbox in enumerate(bounding_boxes):
                         self.helper(idx, bbox,w,h,landmarks)
+                        # p = Process(target=self.helper(idx, bbox,w,h,landmarks,lock))
+                        # processes.append(p)
+                    # for process in processes:
+                    #     process.start()
+                    # for process in processes:
+                    #     processes.join()
                 try:
                     # cv2.imshow("window",self.frame)
                     self.streamer.update_frame(self.frame)
