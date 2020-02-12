@@ -27,6 +27,11 @@ func main() {
 		APP_PORT = "8088"
 	}
 
+	clearRoute := router.PathPrefix("/api/clear").Subrouter()
+	clearRoute.HandleFunc("/embeddings", controllers.ClearEmbeddings)
+	clearRoute.HandleFunc("/embeddings/{user_id}", controllers.ClearEmbeddingsUser)
+	clearRoute.HandleFunc("/attendances/all", controllers.ClearAttendancesAll)
+
 	apiV1 := router.PathPrefix("/api/v1").Subrouter()
 	apiV1.Use(app.JwtAuthentication)
 	apiV2 := router.PathPrefix("/api/v2").Subrouter()

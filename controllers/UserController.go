@@ -270,9 +270,9 @@ func UserRecognize(w http.ResponseWriter, r *http.Request) {
 			acculist = append(acculist, value.Accuracy)
 		}
 		res := recognitionList[floats.MinIdx(acculist)]
-		fmt.Println(res.UserID)
+		fmt.Println(res.UserID, "Accuracy:", res.Accuracy)
 
-		if res.Accuracy <= 0.2 {
+		if res.Accuracy <= 0.15000000000000000 {
 			attendanceBody := models.AttendanceBody{
 				UserID:        res.UserID,
 				CameraID:      res.CameraID,
@@ -286,14 +286,14 @@ func UserRecognize(w http.ResponseWriter, r *http.Request) {
 			newAttendance(w, attendanceBody)
 			insertLog := logStore(log)
 			fmt.Println("insert log :", insertLog)
+			respondJSON(w, 200, "Returned Matching Identities", map[string]interface{}{
+				"user_id":  res.UserID,
+				"name":     res.Name,
+				"accuracy": res.Accuracy,
+				"elapsed":  res.Elapsed,
+			})
 		}
 
-		respondJSON(w, 200, "Returned Matching Identities", map[string]interface{}{
-			"user_id":  res.UserID,
-			"name":     res.Name,
-			"accuracy": res.Accuracy,
-			"elapsed":  res.Elapsed,
-		})
 		return
 	}
 }
