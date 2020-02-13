@@ -53,6 +53,6 @@ func check(err error) {
 
 func main() {
 	fmt.Println("Hello World")
-	http.HandleFunc("/ws", wsEndpoint)
+	http.HandleFunc("/", wsEndpoint)
 	log.Fatal(http.ListenAndServe(":8765", nil))
 }

@@ -15,6 +15,14 @@ import (
 )
 
 func main() {
+
+	//do something, handlers and functions are same as server ones
+	//and send the event to the client
+
+	//do something, handlers and functions are same as server ones
+
+	//close connection
+	// c.Close()
 	router := mux.NewRouter()
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

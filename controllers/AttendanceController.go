@@ -8,11 +8,14 @@ import (
 	"errors"
 	"fmt"
 	"image/png"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	gosocketio "github.com/graarh/golang-socketio"
+	"github.com/graarh/golang-socketio/transport"
 	"github.com/zuramai/smartschool_api/models"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -114,6 +117,29 @@ func newAttendance(w http.ResponseWriter, attendance models.AttendanceBody) (mod
 		PictureTaken: photoName,
 		AttendAt:     timeNow,
 		Keterangan:   keterangan,
+	}
+	c, err := gosocketio.Dial(
+		gosocketio.GetUrl("localhost", 8765, false),
+		transport.GetDefaultWebsocketTransport(),
+	)
+	if err != nil {
+		fmt.Println("Failed to connect to socket")
+		fmt.Println(err)
+	}
+	type AttendanceSocket struct {
+		Name      string    `json:"name"`
+		ImageName string    `json:"image_name"`
+		Time      time.Time `json:"string"`
+	}
+	err2 := c.On(gosocketio.OnConnection, func(h *gosocketio.Channel) {
+		log.Println("Connected")
+		c.Emit("newAbsen", AttendanceSocket{newAttendance.UserID, newAttendance.PictureTaken, newAttendance.AttendAt}) //close connection
+	})
+	err2 = c.On(gosocketio.OnDisconnection, func(h *gosocketio.Channel) {
+		log.Println("Disconnected")
+	})
+	if err2 != nil {
+		fmt.Println("Failed to connect to socket")
 	}
 	// jsonn, _ := json.Marshal(newAttendance)
 
