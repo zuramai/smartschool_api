@@ -8,8 +8,8 @@ from cv2 import rectangle
 from threading import Thread
 from queue import Queue
 from multiprocessing import Process, Lock, Pool
-# import aiohttp
-# import asyncio
+from aiohttp import ClientSession
+import asyncio
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
@@ -22,12 +22,13 @@ class CyberNet:
         self.last_frame = None
         self.stopped = False
         self.require_login = False
+        # self.helper = []
         self.embedder = cv2.dnn.readNetFromTorch("models/openface_nn4.small2.v1.t7")
         self.embedder.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
         self.embedder.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
         self.alignment = AlignDlib('models\\landmarks.dat')
         self.streamer = Streamer(self.port, self.require_login)
-        self.main()
+        # self.main()
 
 
     def align_image(self,img):
@@ -58,7 +59,8 @@ class CyberNet:
                     retval,buffer = cv2.imencode(".png",crop )
                     string_bytes = b64encode(buffer)
                     data = {"image": string_bytes.decode('utf-8'), "camera_id": "5d522f6f16171e56f400246e", "embeddings": np.array(vec[0]).astype("float64").tolist()}
-                    r = requests.post(url="http://localhost:8088/api/v2/user/recognize", json=data)
+                    # r = requests.post(url="http://localhost:8088/api/v2/user/recognize", json=data)
+                    r = requests.post(url="http://172.10.0.31:8088/api/v2/user/recognize", json=data)
                     res = r.json()
                     name = res["data"]["name"]
                     accuracy = res["data"]["accuracy"]
@@ -67,6 +69,10 @@ class CyberNet:
                 except Exception as e:
                     pass
 
+    def postreq(self, data):
+        requests.post(url="http://172.10.0.31:8088/api/v2/user/recognize", json=data)
+        # requests.post(url="http://localhost:8088/api/v2/user/recognize", json=data)
+        
     def send(self,crop):
         try:
             # lock.acquire
@@ -80,12 +86,14 @@ class CyberNet:
             retval,buffer = cv2.imencode(".png",crop )
             string_bytes = b64encode(buffer)
             data = {"image": string_bytes.decode('utf-8'), "camera_id": "5d522f6f16171e56f400246e", "embeddings": np.array(vec[0]).astype("float64").tolist()}
-            requests.post(url="http://localhost:8088/api/v2/user/recognize", json=data) 
+            t = Thread(target=self.postreq(data))
+            # t.daemon = True
+            t.setDaemon(True)
+            t.start()
         except Exception as e:
             print(e)
             return
         # lock.release
-
 
     def get_frame(self):
         try:
@@ -96,7 +104,7 @@ class CyberNet:
             while not self.stopped:
                 print("Video Recaptured")
                 vid = cv2.VideoCapture(0)
-                # vid = cv2.VideoCapture("rtsp://admin:AWPZEO@192.168.137.194/0/h264_stream")
+                # vid = cv2.VideoCapture("rtsp://admin:AWPZEO@192.168.137.166/0/h264_stream")
                 while not self.stopped:
                     if self.stopped:
                         break
@@ -117,11 +125,6 @@ class CyberNet:
         w1 = min(int(round(bbox[3])), w - 1)
         try:
             score = bbox[4]
-            cropped = self.frame[h0 - 30:h1 + 30, w0 - 30:w1 + 30]
-            lock = Lock()
-            Thread(target=self.send, args=(cropped)).start()
-            # p = Process(target=self.send(lock, cropped))
-            # p.start()
             y = h0 - 10 if h0 - 10 > 10 else h0 + 10
             rectangle(self.frame, (w0, h0), (w1, h1), (255, 255, 255), 1)
             landmark = landmarks[idx]
@@ -131,60 +134,54 @@ class CyberNet:
                 if 0 <= pt_h and pt_h < h and 0 <= pt_w and pt_w < w:
                     cv2.circle(self.frame, (pt_w, pt_h), 1, (255, 255, 255),
                             thickness=1)
-            # p.join()
-            # async with aiohttp.ClientSession() as session:
-            #     res = await self.send(lock, cropped)
-            #     print(res)
         except Exception as e:
             print(e)
             pass
 
     def main(self):
-        if __name__ == "__main__":
-            capture = Thread(target=self.get_frame)
-            capture.start()
+        capture = Thread(target=self.get_frame)
+        capture.start()
 
-            pnet_model_path = './models/pnet'
-            rnet_model_path = './models/rnet'
-            onet_model_path = './models/onet'
-            mtcnn = MTCNN(pnet_model_path,
-                            rnet_model_path,
-                            onet_model_path)
+        pnet_model_path = './models/pnet'
+        rnet_model_path = './models/rnet'
+        onet_model_path = './models/onet'
+        mtcnn = MTCNN(pnet_model_path,
+                        rnet_model_path,
+                        onet_model_path)
 
-            while not self.stopped:
-                if self.frames.not_empty:
-                    self.frame = self.frames.get()
-                    (h, w) = self.frame.shape[:2]
-                    bounding_boxes, landmarks = mtcnn.detect(
-                        img=self.frame, min_size=80, factor=0.709,
-                        score_threshold=[0.8, 0.8, 0.8]
-                    )
-                    # processes = []
-                    # lock = Lock()
-                    for idx, bbox in enumerate(bounding_boxes):
-                        self.helper(idx, bbox,w,h,landmarks)
-                        # p = Process(target=self.helper(idx, bbox,w,h,landmarks,lock))
-                        # processes.append(p)
-                    # for process in processes:
-                    #     process.start()
-                    # for process in processes:
-                    #     processes.join()
-                try:
-                    # cv2.imshow("window",self.frame)
-                    self.streamer.update_frame(self.frame)
-                    if not self.streamer.is_streaming:
-                        self.streamer.start_streaming()
-                except Exception as e:
-                    # print(e)
-                    pass
-                k = cv2.waitKey(1) & 0xFF
-                if k == 27:
-                    cv2.destroyAllWindows()
-                    self.stopped = True
-                    break
-            capture.join()
-            # background_api.join()
+        while not self.stopped:
+            if self.frames.not_empty:
+                self.frame = self.frames.get()
+                (h, w) = self.frame.shape[:2]
+                bounding_boxes, landmarks = mtcnn.detect(
+                    img=self.frame, min_size=80, factor=0.709,
+                    score_threshold=[0.8, 0.8, 0.8]
+                )
+                for idx, bbox in enumerate(bounding_boxes):
+                    self.helper(idx, bbox,w,h,landmarks)
 
-# if __name__ == "__main__":
-cybernet = CyberNet
-cybernet()
+                    h0 = max(int(round(bbox[0])), 0)
+                    w0 = max(int(round(bbox[1])), 0)
+                    h1 = min(int(round(bbox[2])), h - 1)
+                    w1 = min(int(round(bbox[3])), w - 1)
+                    cropped = self.frame[h0 - 30:h1 + 30, w0 - 30:w1 + 30]
+                    self.send(cropped)
+            try:
+                # cv2.imshow("window",self.frame)
+                self.streamer.update_frame(self.frame)
+                if not self.streamer.is_streaming:
+                    self.streamer.start_streaming()
+            except Exception as e:
+                # print(e)
+                pass
+            k = cv2.waitKey(1) & 0xFF
+            if k == 27:
+                cv2.destroyAllWindows()
+                self.stopped = True
+                break
+        capture.join()
+        # background_api.join()
+
+if __name__ == "__main__":
+    cybernet = CyberNet
+    cybernet().main()
