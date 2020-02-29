@@ -278,7 +278,8 @@ class Register:
                     z = steady_pose[0][2]
 
                     vertical,horizontal = self.get_interface(x,y,z)
-                    self.auto_sort_save(vertical,horizontal,mark_detector.get_face(original,facebox,70))
+                    face_img = cv2.cvtColor(face_img,cv2.COLOR_RGB2BGR)
+                    self.auto_sort_save(vertical,horizontal,face_img)
                     # print(x)
                     cv2.putText(frame,"horizontal : {} vertical : {} ".format(horizontal,vertical),(100,100),cv2.FONT_HERSHEY_TRIPLEX,0.6,(0,255,0),1)
                     # Uncomment following line to draw head axes on frame.

@@ -10,24 +10,39 @@ from queue import Queue
 from multiprocessing import Process, Lock, Pool
 from aiohttp import ClientSession
 import asyncio
+import argparse
+from itertools import repeat
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 class CyberNet:
     def __init__(self):
-        self.api = Queue(maxsize=20)
+        parser = argparse.ArgumentParser(description='Input the Application Config.')
+        parser.add_argument('--camera_id',required=True,help='sum the integers (default: find the max)')
+        parser.add_argument('--rtsp_link',required=True,help='an integer for the accumulator')
+        parser.add_argument('--stream_port',required=True, type=int,help='an integer for the accumulator')
+        parser.add_argument('--end_point',required=True,help='an integer for the accumulator')
+        args = vars(parser.parse_args())
+        
+        self.camera_id =args["camera_id"]
+        self.rtsp_link = args["rtsp_link"]
+        self.port = args["stream_port"]
+        self.endpoint = args["end_point"]
+        self.api = Queue(maxsize=10)
         self.frames = Queue(maxsize=10)
-        self.port = 4040
         self.frame = None
         self.last_frame = None
         self.stopped = False
         self.require_login = False
+        self.use_gpu = True
         # self.helper = []
         self.embedder = cv2.dnn.readNetFromTorch("models/openface_nn4.small2.v1.t7")
-        self.embedder.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-        self.embedder.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
         self.alignment = AlignDlib('models\\landmarks.dat')
         self.streamer = Streamer(self.port, self.require_login)
+
+        # if self.use_gpu:
+        self.embedder.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+        self.embedder.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
         # self.main()
 
 
@@ -46,32 +61,9 @@ class CyberNet:
                         thickness=2)
         return img
 
-    def background_sender(self,lock):
-        while not self.stopped:
-            if self.api.not_empty:
-                try:
-                    lock.acquire
-                    crop = self.api.get()
-                    aligned = self.align_image(crop)
-                    faceBlob = cv2.dnn.blobFromImage(aligned, 1.0 / 255, (96, 96), (0, 0, 0), swapRB=True, crop=False)
-                    self.embedder.setInput(faceBlob)
-                    vec = self.embedder.forward()
-                    retval,buffer = cv2.imencode(".png",crop )
-                    string_bytes = b64encode(buffer)
-                    data = {"image": string_bytes.decode('utf-8'), "camera_id": "5d522f6f16171e56f400246e", "embeddings": np.array(vec[0]).astype("float64").tolist()}
-                    # r = requests.post(url="http://localhost:8088/api/v2/user/recognize", json=data)
-                    r = requests.post(url="http://172.10.0.31:8088/api/v2/user/recognize", json=data)
-                    res = r.json()
-                    name = res["data"]["name"]
-                    accuracy = res["data"]["accuracy"]
-                    print("Detected : {} Accuracy : {}".format(name,accuracy))
-                    lock.release
-                except Exception as e:
-                    pass
-
     def postreq(self, data):
-        requests.post(url="http://172.10.0.31:8088/api/v2/user/recognize", json=data)
-        # requests.post(url="http://localhost:8088/api/v2/user/recognize", json=data)
+        # requests.post(url="http://172.10.0.31:8088/api/v2/user/recognize", json=data)
+        requests.post(url="http://{}/api/v2/user/recognize".format(self.endpoint), json=data)
         
     def send(self,crop):
         try:
@@ -85,10 +77,11 @@ class CyberNet:
             vec = self.embedder.forward()
             retval,buffer = cv2.imencode(".png",crop )
             string_bytes = b64encode(buffer)
-            data = {"image": string_bytes.decode('utf-8'), "camera_id": "5d522f6f16171e56f400246e", "embeddings": np.array(vec[0]).astype("float64").tolist()}
+            data = {"image": string_bytes.decode('utf-8'), "camera_id": self.camera_id, "embeddings": np.array(vec[0]).astype("float64").tolist()}
+            # self.postreq(data)
             t = Thread(target=self.postreq(data))
-            # t.daemon = True
-            t.setDaemon(True)
+            # t.setDaemon(True)
+            t.daemon = True
             t.start()
         except Exception as e:
             print(e)
@@ -103,7 +96,10 @@ class CyberNet:
             vid = cv2.VideoCapture(best.url)'''
             while not self.stopped:
                 print("Video Recaptured")
-                vid = cv2.VideoCapture(0)
+                try:
+                    vid = cv2.VideoCapture(int(self.rtsp_link))
+                except:
+                    vid = cv2.VideoCapture(self.rtsp_link)
                 # vid = cv2.VideoCapture("rtsp://admin:AWPZEO@192.168.137.166/0/h264_stream")
                 while not self.stopped:
                     if self.stopped:
@@ -157,17 +153,27 @@ class CyberNet:
                     img=self.frame, min_size=80, factor=0.709,
                     score_threshold=[0.8, 0.8, 0.8]
                 )
+                # send_queue = []
+                # lock = Lock()
                 for idx, bbox in enumerate(bounding_boxes):
                     self.helper(idx, bbox,w,h,landmarks)
-
                     h0 = max(int(round(bbox[0])), 0)
                     w0 = max(int(round(bbox[1])), 0)
                     h1 = min(int(round(bbox[2])), h - 1)
                     w1 = min(int(round(bbox[3])), w - 1)
                     cropped = self.frame[h0 - 30:h1 + 30, w0 - 30:w1 + 30]
                     self.send(cropped)
+                #     p = Process(target=self.send(cropped,lock,))
+                #     send_queue.append(p)
+                # for process in send_queue:
+                #     process.start()
+                # for process in send_queue:
+                #     process.join()
+                # for process in send_queue:
+                #     process.terminate()
+                # send_queue.clear()
             try:
-                # cv2.imshow("window",self.frame)
+                cv2.imshow("window",self.frame)
                 self.streamer.update_frame(self.frame)
                 if not self.streamer.is_streaming:
                     self.streamer.start_streaming()

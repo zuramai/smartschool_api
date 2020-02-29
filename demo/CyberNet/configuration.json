@@ -1,0 +1,8 @@
+[
+    {
+        "CameraID":"5d522f6f16171e56f400246e",
+        "CameraRTSPLink":"0",
+        "ServerEndPoint":"localhost:8088",
+        "CameraStreamPort":"4040"
+    }
+]
