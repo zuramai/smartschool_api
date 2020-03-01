@@ -51,8 +51,9 @@ func AttendanceV2(w http.ResponseWriter, r *http.Request) {
 }
 
 func newAttendance(w http.ResponseWriter, attendance models.AttendanceBody) (models.Attendance, error) {
-	todayFirst, _ := time.Parse("2006-01-02", time.Now().Format("2006-01-02"))
-	todayLast, _ := time.Parse("2006-01-02 15:04:05", time.Now().Format("2006-01-02")+" 23:59:59")
+	loc, _ := time.LoadLocation("Asia/Jakarta")
+	todayFirst, _ := time.Parse("2006-01-02", time.Now().In(loc).Format("2006-01-02"))
+	todayLast, _ := time.Parse("2006-01-02 15:04:05", time.Now().In(loc).Format("2006-01-02")+" 23:59:59")
 
 	query := bson.M{
 		"$and": []bson.M{
@@ -75,7 +76,6 @@ func newAttendance(w http.ResponseWriter, attendance models.AttendanceBody) (mod
 	// cameraID, _ := strconv.ParseInt(r.FormValue("camera_id"), 10, 64)
 
 	timeNowMs := strconv.FormatInt(makeTimestampMilli(), 10)
-	loc, _ := time.LoadLocation("Asia/Jakarta")
 	timeNow, _ := time.Parse("2006-01-02 15:04:05", time.Now().In(loc).Format("2006-01-02 15:04:05"))
 	photoName := timeNowMs + ".png"
 	// dir, _ := os.Getwd()
@@ -114,6 +114,7 @@ func newAttendance(w http.ResponseWriter, attendance models.AttendanceBody) (mod
 
 	newAttendance := models.Attendance{
 		UserID:       attendance.UserID,
+		Name:         attendance.Name,
 		PictureTaken: photoName,
 		AttendAt:     timeNow,
 		Keterangan:   keterangan,
@@ -129,11 +130,11 @@ func newAttendance(w http.ResponseWriter, attendance models.AttendanceBody) (mod
 	type AttendanceSocket struct {
 		Name      string    `json:"name"`
 		ImageName string    `json:"image_name"`
-		Time      time.Time `json:"string"`
+		Time      time.Time `json:"time"`
 	}
 	err2 := c.On(gosocketio.OnConnection, func(h *gosocketio.Channel) {
 		log.Println("Connected")
-		c.Emit("newAbsen", AttendanceSocket{newAttendance.UserID, newAttendance.PictureTaken, newAttendance.AttendAt}) //close connection
+		c.Emit("newAbsen", AttendanceSocket{newAttendance.Name, newAttendance.PictureTaken, newAttendance.AttendAt}) //close connection
 	})
 	err2 = c.On(gosocketio.OnDisconnection, func(h *gosocketio.Channel) {
 		log.Println("Disconnected")

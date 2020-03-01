@@ -274,6 +274,7 @@ func UserRecognize(w http.ResponseWriter, r *http.Request) {
 
 		if res.Accuracy <= 0.15000000000000000 {
 			attendanceBody := models.AttendanceBody{
+				Name:          res.Name,
 				UserID:        res.UserID,
 				CameraID:      res.CameraID,
 				PhotoEncoding: res.PhotoEncoding,

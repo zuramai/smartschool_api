@@ -7,6 +7,7 @@ import (
 // Attendance : Base struct table attendance
 type Attendance struct {
 	UserID       string    `json:"-" bson:"user_id"`
+	Name         string    `json:"name" bson:"name"`
 	PictureTaken string    `json:"picture_taken" bson:"picture_taken"`
 	AttendAt     time.Time `json:"attend_at" bson:"attend_at"`
 	Keterangan   string    `json:"status"`
@@ -28,6 +29,7 @@ type AttendanceJSON struct {
 
 type AttendanceBody struct {
 	UserID        string `json:"user_id"`
+	Name          string `json:"name"`
 	PhotoEncoding string `json:"photo"`
 	CameraID      string `json:"camera_id"`
 }
