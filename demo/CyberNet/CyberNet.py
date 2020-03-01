@@ -173,7 +173,7 @@ class CyberNet:
                 #     process.terminate()
                 # send_queue.clear()
             try:
-                cv2.imshow("window",self.frame)
+                # cv2.imshow("window",self.frame)
                 self.streamer.update_frame(self.frame)
                 if not self.streamer.is_streaming:
                     self.streamer.start_streaming()

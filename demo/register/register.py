@@ -99,13 +99,14 @@ class Register:
                     (startX, startY, endX, endY) = box.astype("int")
                     y = startY - 10 if startY - 10 > 10 else startY + 10
                     try:
-                        face = frame[startY-10:endY+10, startX-10:endX+10]
-                        (h,w) =face.shape[:2]
-                        aligned = self.align_image(face)
+                        # face = frame[startY-10:endY+10, startX-10:endX+10]
+                        (h,w) =frame.shape[:2]
+                        aligned = self.align_image(frame)
                         faceBlob = cv2.dnn.blobFromImage(aligned, 1.0 / 255,
                         (96, 96), (0, 0, 0), swapRB=True, crop=False)
                         self.embedder.setInput(faceBlob)
                         vec = self.embedder.forward()
+                        print(np.array(vec[0]).astype("float64").tolist())
                         self.embeddings.append(np.array(vec[0]).astype("float64").tolist())
                         cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 4)
                         # self.window['-IMAGE-'].update(data=cv2.imencode('.png', frame)[1].tobytes())
@@ -117,7 +118,8 @@ class Register:
                 cv2.destroyAllWindows()
                 break
         try:
-            r = requests.post(url="http://172.10.0.31:8088/api/v2/user/verify",json= {"user_id":int(self.user_id),"embeddings":np.array(self.embeddings).astype("float64").tolist()})
+            print(self.embeddings)
+            r = requests.post(url="http://192.168.1.12:8088/api/v2/user/verify",json= {"user_id":int(self.user_id),"embeddings":np.array(self.embeddings).astype("float64").tolist()})
             print(r.json())
         except:
             sg.Popup("Register Failed! Api not Online!")

@@ -38,7 +38,7 @@ class FaceDetector:
                 y_right_top = int(result[6] * rows)
                 confidences.append(confidence)
                 faceboxes.append(
-                    [x_left_bottom, y_left_bottom, x_right_top, y_right_top])
+                    [x_left_bottom+20, y_left_bottom-20, x_right_top-20, y_right_top+20])
 
         self.detection_result = [faceboxes, confidences]
 
