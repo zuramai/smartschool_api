@@ -1,8 +1,9 @@
 [
     {
         "CameraID":"5d522f6f16171e56f400246e",
-        "CameraRTSPLink":"rtsp://admin:admin12345@192.168.1.16:554/Streaming/channels/101",
-        "ServerEndPoint":"192.168.1.12:8088",
+        "CameraRTSPLink":"0",
+        "CameraRTSPLink2":"rtsp://admin:admin12345@192.168.1.16:554/Streaming/channels/101",
+        "ServerEndPoint":"localhost:8088",
         "CameraStreamPort":"4040"
     }
 ]

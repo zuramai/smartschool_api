@@ -19,7 +19,6 @@ import (
 )
 
 func main() {
-	CheckAutoRun()
 	conf := ReadConfig()
 	var ProcessList []exec.Cmd
 	for i,cam := range(conf.camera){

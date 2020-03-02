@@ -30,6 +30,7 @@ class CyberNet:
         self.endpoint = args["end_point"]
         self.api = Queue(maxsize=10)
         self.frames = Queue(maxsize=10)
+        self.post_queue = Queue(maxsize=10)
         self.frame = None
         self.last_frame = None
         self.stopped = False
@@ -43,6 +44,10 @@ class CyberNet:
         # if self.use_gpu:
         self.embedder.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
         self.embedder.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+
+        self.sender_thread = Thread(target=self.sender)
+        self.sender_thread.start()
+
         # self.main()
 
 
@@ -61,11 +66,16 @@ class CyberNet:
                         thickness=2)
         return img
 
-    def postreq(self, data):
+    def sender(self):
+        while True:
+            if self.post_queue.not_empty:
+                try:
+                    requests.post(url="http://{}/api/v2/user/recognize".format(self.endpoint), json=self.post_queue.get())
+                except:
+                    print("Time Out")
         # requests.post(url="http://172.10.0.31:8088/api/v2/user/recognize", json=data)
-        requests.post(url="http://{}/api/v2/user/recognize".format(self.endpoint), json=data)
         
-    def send(self,crop):
+    def prepare_data(self,crop):
         try:
             # lock.acquire
             aligned = self.align_image(crop)
@@ -78,13 +88,9 @@ class CyberNet:
             retval,buffer = cv2.imencode(".png",crop )
             string_bytes = b64encode(buffer)
             data = {"image": string_bytes.decode('utf-8'), "camera_id": self.camera_id, "embeddings": np.array(vec[0]).astype("float64").tolist()}
-            # self.postreq(data)
-            t = Thread(target=self.postreq(data))
-            # t.setDaemon(True)
-            t.daemon = True
-            t.start()
+            if self.post_queue.not_full:
+                self.post_queue.put(data)
         except Exception as e:
-            print(e)
             return
         # lock.release
 
@@ -114,7 +120,7 @@ class CyberNet:
         except Exception as e:
             pass
         
-    def helper(self,idx, bbox,w,h,landmarks):
+    def drawer(self,idx, bbox,w,h,landmarks):
         h0 = max(int(round(bbox[0])), 0)
         w0 = max(int(round(bbox[1])), 0)
         h1 = min(int(round(bbox[2])), h - 1)
@@ -153,25 +159,24 @@ class CyberNet:
                     img=self.frame, min_size=80, factor=0.709,
                     score_threshold=[0.8, 0.8, 0.8]
                 )
-                # send_queue = []
+                send_queue = []
                 # lock = Lock()
                 for idx, bbox in enumerate(bounding_boxes):
-                    self.helper(idx, bbox,w,h,landmarks)
+                    self.drawer(idx, bbox,w,h,landmarks)
                     h0 = max(int(round(bbox[0])), 0)
                     w0 = max(int(round(bbox[1])), 0)
                     h1 = min(int(round(bbox[2])), h - 1)
                     w1 = min(int(round(bbox[3])), w - 1)
                     cropped = self.frame[h0 - 30:h1 + 30, w0 - 30:w1 + 30]
-                    self.send(cropped)
-                #     p = Process(target=self.send(cropped,lock,))
-                #     send_queue.append(p)
-                # for process in send_queue:
-                #     process.start()
-                # for process in send_queue:
-                #     process.join()
-                # for process in send_queue:
-                #     process.terminate()
-                # send_queue.clear()
+                    self.prepare_data(cropped)
+                    # send_queue.append(t)
+                #     t = Thread(target=self.prepare_data,args=(cropped,))
+                #     send_queue.append(t)
+                #     t.start()
+                # for thread in send_queue:
+                #     thread.join()
+                # with Pool(8) as pool:
+                #     pool.map_async(self.prepare_data,send_queue)
             try:
                 # cv2.imshow("window",self.frame)
                 self.streamer.update_frame(self.frame)
@@ -186,6 +191,7 @@ class CyberNet:
                 self.stopped = True
                 break
         capture.join()
+        self.sender_thread.join()
         # background_api.join()
 
 if __name__ == "__main__":
