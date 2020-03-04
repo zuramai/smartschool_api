@@ -57,6 +57,7 @@ func Parse(cam Camera)(command exec.Cmd){
 		"--camera_id",cam.CameraID,
 		"--rtsp_link",cam.CameraRTSPLink,
 		"--stream_port",cam.CameraStreamPort,
+		"--mode","realtime",
 		"--end_point",cam.ServerEndPoint)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
