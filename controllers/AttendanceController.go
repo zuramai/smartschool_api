@@ -79,7 +79,7 @@ func newAttendance(w http.ResponseWriter, attendance models.AttendanceBody) (mod
 	timeNow, _ := time.Parse("2006-01-02 15:04:05", time.Now().In(loc).Format("2006-01-02 15:04:05"))
 	photoName := timeNowMs + ".png"
 	// dir, _ := os.Getwd()
-	photoDir := "C:/xampp2/htdocs/laravel/SmartSchool/public/images/attendance/" + photoName
+	photoDir := "D:/Programmer/Code/Laravel/smart_office/public/images/attendance/" + photoName
 
 	f, err := os.Create(photoDir)
 	if err != nil {

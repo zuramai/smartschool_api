@@ -34,7 +34,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	db = client.Database("smart_school")
+	db = client.Database("smart_office")
 	// username := os.Getenv("DB_USER")
 	// password := os.Getenv("DB_PASS")
 	// db_name := os.Getenv("DB_NAME")
