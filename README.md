@@ -31,12 +31,13 @@
 
 6. Run the Attendance Detection
   ```bash
-  cd $GOPATH/src/github.com/zuramai/smartschool_api/demo
+  cd $GOPATH/src/github.com/zuramai/smartschool_api/demo/CyberNet
   go run bundler.go
   ```
 
 ## Registration
 1. Go to directory
 ```bash
-cd $GOPATH/src/github.com/zuramai/smartschool_api/demo
+cd $GOPATH/src/github.com/zuramai/smartschool_api/demo/Register
+go run Binary.go
 ```
